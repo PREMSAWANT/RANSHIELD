@@ -50,6 +50,21 @@ def init_db():
         )
     """)
 
+    # Quarantine Table (New Feature)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quarantine_vault (
+            quarantine_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp REAL NOT NULL,
+            original_name TEXT NOT NULL,
+            original_path TEXT NOT NULL,
+            quarantine_path TEXT NOT NULL,
+            file_hash TEXT NOT NULL,
+            file_size INTEGER NOT NULL,
+            pid INTEGER,
+            status TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -82,6 +97,23 @@ def log_alert(pid, exe_path, threat_score, reason, action_taken):
         conn.commit()
     except Exception as e:
         print(f"[-] Database log_alert error: {e}")
+    finally:
+        conn.close()
+
+def log_quarantine(original_path, quarantine_path, file_hash, file_size, pid):
+    """Log a quarantined binary execution entry."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        original_name = os.path.basename(original_path)
+        cursor.execute("""
+            INSERT INTO quarantine_vault (
+                timestamp, original_name, original_path, quarantine_path, file_hash, file_size, pid, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'QUARANTINED')
+        """, (time.time(), original_name, original_path, quarantine_path, file_hash, file_size, pid))
+        conn.commit()
+    except Exception as e:
+        print(f"[-] Database log_quarantine error: {e}")
     finally:
         conn.close()
 
@@ -173,6 +205,47 @@ def get_alerts():
     finally:
         conn.close()
 
+def get_quarantine_items():
+    """Retrieve items stored in the secure Quarantine Vault."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM quarantine_vault ORDER BY timestamp DESC")
+        return [dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        print(f"[-] Database get_quarantine_items error: {e}")
+        return []
+    finally:
+        conn.close()
+
+def get_quarantine_item_by_id(quarantine_id):
+    """Retrieve a single quarantined binary log entry."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM quarantine_vault WHERE quarantine_id = ?", (quarantine_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    except Exception as e:
+        print(f"[-] Database get_quarantine_item_by_id error: {e}")
+        return None
+    finally:
+        conn.close()
+
+def update_quarantine_status(quarantine_id, status):
+    """Update status of a quarantined file (e.g., RELEASED or SUBMITTED)."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE quarantine_vault SET status = ? WHERE quarantine_id = ?", (status, quarantine_id))
+        conn.commit()
+    except Exception as e:
+        print(f"[-] Database update_quarantine_status error: {e}")
+    finally:
+        conn.close()
+
 def get_stats():
     """Get high level statistics for dashboard cards."""
     conn = sqlite3.connect(DB_PATH)
@@ -181,7 +254,8 @@ def get_stats():
         "total_events": 0,
         "active_alerts": 0,
         "processes_monitored": 0,
-        "calibrated_count": 0
+        "calibrated_count": 0,
+        "quarantined_count": 0
     }
     try:
         cursor.execute("SELECT COUNT(*) FROM event_log")
@@ -195,6 +269,9 @@ def get_stats():
         
         cursor.execute("SELECT COUNT(*) FROM process_calibration")
         stats["calibrated_count"] = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM quarantine_vault WHERE status = 'QUARANTINED'")
+        stats["quarantined_count"] = cursor.fetchone()[0]
     except Exception as e:
         print(f"[-] Database get_stats error: {e}")
     finally:
@@ -209,6 +286,7 @@ def clear_db():
         cursor.execute("DELETE FROM event_log")
         cursor.execute("DELETE FROM process_calibration")
         cursor.execute("DELETE FROM alerts")
+        cursor.execute("DELETE FROM quarantine_vault")
         conn.commit()
     except Exception as e:
         print(f"[-] Database clear_db error: {e}")

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RANSHIELD - Threat Quarantine Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow"></span>
+                <h2>RANSHIELD</h2>
+                <p>Endpoint Protection</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/"><span class="icon">📈</span> Telemetry Console</a></li>
+                <li><a href="/dfir"><span class="icon">🔍</span> Forensic Logs</a></li>
+                <li><a href="/policies"><span class="icon">🛡️</span> Rule Policies</a></li>
+                <li class="active"><a href="/vault"><span class="icon">☣️</span> Quarantine Vault</a></li>
+                <li><a href="/calibrator"><span class="icon">⚙️</span> Workload Profiler</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="status-indicator active">
+                    <span class="dot"></span>
+                    <span class="text">AGENT ACTIVE</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1>Quarantined Threat Vault</h1>
+                    <p class="subtitle">Secure holding area for suspended executables and identified malware binaries</p>
+                </div>
+            </header>
+
+            <div class="scroll-container">
+                <div class="grid-1col">
+                    <!-- High level explanation -->
+                    <div class="card card-warning">
+                        <div class="card-body">
+                            <h4>Locked Quarantine Subsystem</h4>
+                            <p>When a process breaches the threat scoring threshold ($\theta \ge 0.75$), its primary executable binary is copied here, renamed with secure hashes, and locked down with restricted read/execute permissions. This prevents accidental execution while preserving proof for digital forensics.</p>
+                        </div>
+                    </div>
+
+                    <!-- Main table of quarantined files -->
+                    <div class="card card-neon margin-top-md">
+                        <div class="card-header justify-between">
+                            <div class="flex-row">
+                                <span class="header-line"></span>
+                                <h3>Active Quarantined Binaries</h3>
+                            </div>
+                            <button id="refresh-vault" class="btn btn-secondary">Refresh Vault</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="telemetry-table" id="vault-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Original Filename</th>
+                                            <th>Quarantined File Hash</th>
+                                            <th>File Size</th>
+                                            <th>Monitored PID</th>
+                                            <th>Log Status</th>
+                                            <th>Incident Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vault-list">
+                                        <!-- Fetched dynamically -->
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-md">Querying local database logs...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Threat Intelligence Modal Overlay -->
+    <div id="vt-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>VIRUSTOTAL MULTI-ENGINE HARMONIZED ANALYSIS</h3>
+                <button id="close-modal" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="vt-modal-body">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Separate vault-specific logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const vaultList = document.getElementById('vault-list');
+            const refreshBtn = document.getElementById('refresh-vault');
+            const vtModal = document.getElementById('vt-modal');
+            const closeModal = document.getElementById('close-modal');
+            const vtModalBody = document.getElementById('vt-modal-body');
+
+            function loadVaultData() {
+                vaultList.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-md">Loading quarantined binaries...</td></tr>';
+                fetch('/api/vault')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data || data.length === 0) {
+                            vaultList.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-lg">No threat binaries quarantined. The endpoint is clean.</td></tr>';
+                            return;
+                        }
+                        
+                        vaultList.innerHTML = '';
+                        data.forEach(item => {
+                            const date = new Date(item.timestamp * 1000).toLocaleString();
+                            const sizeKB = (item.file_size / 1024).toFixed(1);
+                            
+                            let statusClass = 'status-quarantined';
+                            if (item.status === 'RELEASED') statusClass = 'status-released';
+                            if (item.status === 'SUBMITTED') statusClass = 'status-submitted';
+                            
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="font-mono text-small">${date}</td>
+                                <td><span class="font-bold text-danger">${item.original_name}</span></td>
+                                <td class="font-mono text-small" title="${item.file_hash}">${item.file_hash.substring(0, 16)}...</td>
+                                <td class="font-mono">${sizeKB} KB</td>
+                                <td class="font-mono">${item.pid || 'N/A'}</td>
+                                <td><span class="badge ${statusClass}">${item.status}</span></td>
+                                <td>
+                                    <div class="flex-row gap-xs">
+                                        <button class="btn btn-accent btn-small scan-vt" data-id="${item.quarantine_id}">Intel Scan</button>
+                                        ${item.status === 'QUARANTINED' ? `<button class="btn btn-primary btn-small release-binary" data-id="${item.quarantine_id}">Release</button>` : ''}
+                                    </div>
+                                </td>
+                            `;
+                            vaultList.appendChild(tr);
+                        });
+
+                        attachActionListeners();
+                    })
+                    .catch(err => {
+                        vaultList.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-md">Error querying vault API: ${err}</td></tr>`;
+                    });
+            }
+
+            function attachActionListeners() {
+                // VirusTotal simulated scan click
+                document.querySelectorAll('.scan-vt').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const qid = btn.getAttribute('data-id');
+                        vtModal.classList.remove('hidden');
+                        vtModalBody.innerHTML = `
+                            <div class="text-center py-lg">
+                                <div class="loading-spinner"></div>
+                                <p class="margin-top-sm">Submitting binary hash to VirusTotal Cloud Core API...</p>
+                            </div>
+                        `;
+                        
+                        fetch('/api/vault/virustotal', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ quarantine_id: qid })
+                        })
+                        .then(res => res.json())
+                        .then(resData => {
+                            if (resData.status === 'success') {
+                                vtModalBody.innerHTML = `
+                                    <div class="vt-results-header">
+                                        <div class="vt-score-gauge">
+                                            <span class="gauge-score text-danger">${resData.detections}</span>
+                                            <span class="gauge-label">Engines Flagged</span>
+                                        </div>
+                                        <div class="vt-meta">
+                                            <h4>${resData.filename}</h4>
+                                            <p class="font-mono text-small text-muted">${resData.hash}</p>
+                                            <p class="margin-top-xs"><strong>Scan Timestamp:</strong> ${resData.scan_date}</p>
+                                        </div>
+                                    </div>
+                                    <hr class="vt-divider">
+                                    <div class="vt-detections">
+                                        <div class="vt-engine-card danger">
+                                            <strong>Kaspersky Endpoint:</strong> <span>HEUR:Trojan.Win32.Ransom.Generic</span>
+                                        </div>
+                                        <div class="vt-engine-card danger">
+                                            <strong>Microsoft Defender:</strong> <span>Ransom:Win32/Lockbit.A!MTB</span>
+                                        </div>
+                                        <div class="vt-engine-card danger">
+                                            <strong>Sophos InterceptX:</strong> <span>Troj/Ransom-FVA</span>
+                                        </div>
+                                        <div class="vt-engine-card danger">
+                                            <strong>Symantec Insight:</strong> <span>Ransom.Lockbit!g12</span>
+                                        </div>
+                                        <div class="vt-engine-card danger">
+                                            <strong>CrowdStrike Falcon:</strong> <span>Malicious_Behavior.Gen (Suspicious)</span>
+                                        </div>
+                                    </div>
+                                    <div class="vt-summary margin-top-md text-center card card-danger py-sm px-md">
+                                        <strong>MALWARE FAMILY IDENTIFIED:</strong> <span>${resData.malware_family} (${resData.classification})</span>
+                                    </div>
+                                `;
+                                loadVaultData(); // refresh status badge
+                            } else {
+                                vtModalBody.innerHTML = `<div class="alert alert-danger">Scan Failed: ${resData.error}</div>`;
+                            }
+                        })
+                        .catch(err => {
+                            vtModalBody.innerHTML = `<div class="alert alert-danger">Connection Error: ${err}</div>`;
+                        });
+                    });
+                });
+
+                // Release binary from quarantine click
+                document.querySelectorAll('.release-binary').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const qid = btn.getAttribute('data-id');
+                        if (confirm('Releasing this file moves the binary back to its original executable location and makes it runnable. Are you sure you want to authorize this release?')) {
+                            fetch('/api/vault/release', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ quarantine_id: qid })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    alert(data.message);
+                                    loadVaultData();
+                                } else {
+                                    alert('Release Failed: ' + data.error);
+                                }
+                            })
+                            .catch(err => {
+                                alert('Connection Error: ' + err);
+                            });
+                        }
+                    });
+                });
+            }
+
+            refreshBtn.addEventListener('click', loadVaultData);
+            closeModal.addEventListener('click', () => vtModal.classList.add('hidden'));
+
+            // Initial load
+            loadVaultData();
+        });
+    </script>
+</body>
+</html>

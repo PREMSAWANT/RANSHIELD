@@ -6,7 +6,7 @@ import psutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from ranshield.config import WATCH_DIRECTORIES
+import ranshield.config as config
 from ranshield.engine import DetectionEngine
 
 class FileMonitorHandler(FileSystemEventHandler):
@@ -21,7 +21,7 @@ class FileMonitorHandler(FileSystemEventHandler):
         self._active_pids_cache = []
         self._update_process_cache()
         
-        # Start a background thread to keep the process list cache warm and fresh
+        # Background thread to keep the process list cache warm and fresh
         self._stop_cache_thread = threading.Event()
         self._cache_thread = threading.Thread(target=self._keep_cache_warm, daemon=True)
         self._cache_thread.start()
@@ -31,7 +31,6 @@ class FileMonitorHandler(FileSystemEventHandler):
         active = []
         for proc in psutil.process_iter(['pid', 'name', 'exe']):
             try:
-                # We skip idle system processes to optimize lookup speed
                 if proc.info['pid'] <= 4 or not proc.info['exe']:
                     continue
                 active.append(proc.info)
@@ -54,7 +53,6 @@ class FileMonitorHandler(FileSystemEventHandler):
         Heuristic to resolve which process modified/created/deleted a file.
         Queries active file handles and correlates I/O activity.
         """
-        # Resolve path to absolute form
         abs_path = os.path.abspath(file_path)
         
         # Strategy 1: Check active file locks or open handles using psutil
@@ -65,15 +63,13 @@ class FileMonitorHandler(FileSystemEventHandler):
             try:
                 pid = proc_info['pid']
                 p = psutil.Process(pid)
-                # Check files currently opened by the process
                 for f in p.open_files():
                     if os.path.abspath(f.path) == abs_path:
                         return pid, proc_info['exe']
             except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                 continue
                 
-        # Strategy 2: If file handle is closed, correlate with the process 
-        # doing the most I/O write operations right now.
+        # Strategy 2: Correlate with the process doing the most I/O write operations right now
         best_pid = None
         best_exe = None
         max_writes = -1
@@ -93,7 +89,7 @@ class FileMonitorHandler(FileSystemEventHandler):
         if best_pid is not None:
             return best_pid, best_exe
             
-        # Fallback to current python process or generic system process info
+        # Fallback to current python process
         return os.getpid(), sys.executable
 
     def on_modified(self, event):
@@ -122,7 +118,6 @@ class FileMonitorHandler(FileSystemEventHandler):
             return
             
         pid, exe_path = self._resolve_pid_for_file(event.dest_path)
-        # Treated as rename event in our engine
         self.engine.evaluate_event(pid, exe_path, event.dest_path, "RENAME")
 
     def stop(self):
@@ -132,20 +127,21 @@ class FileMonitorHandler(FileSystemEventHandler):
 class MonitoringAgent:
     """
     Main monitoring subsystem managing file-system observers
-    on configured watch directories.
+    on configured watch directories. Supports dynamic watch folder reloads.
     """
     def __init__(self, engine: DetectionEngine):
         self.engine = engine
-        self.observer = Observer()
+        self.observer = None
         self.handler = FileMonitorHandler(engine)
         self.is_running = False
 
     def start(self):
-        """Start the watchdog filesystem observer."""
+        """Start the watchdog filesystem observer on configured paths."""
         if self.is_running:
             return
             
-        for path in WATCH_DIRECTORIES:
+        self.observer = Observer()
+        for path in config.WATCH_DIRECTORIES:
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
             self.observer.schedule(self.handler, path, recursive=True)
@@ -157,11 +153,22 @@ class MonitoringAgent:
 
     def stop(self):
         """Stop the watchdog observer."""
-        if not self.is_running:
+        if not self.is_running or not self.observer:
             return
             
-        self.handler.stop()
         self.observer.stop()
         self.observer.join()
+        self.observer = None
         self.is_running = False
         print("[INFO] Monitoring Agent stopped.")
+
+    def reload_watch_directories(self):
+        """Reload directory watching schedules dynamically based on active config list."""
+        print("[INFO] Reloading directory watches dynamically...")
+        was_running = self.is_running
+        if was_running:
+            self.stop()
+        # Paths will be read dynamically from config in start()
+        if was_running:
+            self.start()
+        print("[INFO] Dynamic directory reload complete.")

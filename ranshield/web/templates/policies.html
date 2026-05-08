@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RANSHIELD - Adaptive Policy Configurations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow"></span>
+                <h2>RANSHIELD</h2>
+                <p>Endpoint Protection</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/"><span class="icon">📈</span> Telemetry Console</a></li>
+                <li><a href="/dfir"><span class="icon">🔍</span> Forensic Logs</a></li>
+                <li class="active"><a href="/policies"><span class="icon">🛡️</span> Rule Policies</a></li>
+                <li><a href="/vault"><span class="icon">☣️</span> Quarantine Vault</a></li>
+                <li><a href="/calibrator"><span class="icon">⚙️</span> Workload Profiler</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="status-indicator active">
+                    <span class="dot"></span>
+                    <span class="text">AGENT ACTIVE</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1>Policy & Heuristics Controls</h1>
+                    <p class="subtitle">Customize threat engine weights, thresholds, and autonomous containment actions</p>
+                </div>
+            </header>
+
+            <div class="scroll-container">
+                <!-- Status Notifications -->
+                {% if success %}
+                <div class="alert alert-success">
+                    <h4>Settings Saved Successfully</h4>
+                    <p>Dynamic engine weights and filesystem schedules reloaded instantly.</p>
+                </div>
+                {% endif %}
+                {% if error %}
+                <div class="alert alert-danger">
+                    <h4>Configuration Error</h4>
+                    <p>{{ error }}</p>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/policies" class="policies-form">
+                    <div class="grid-2col">
+                        <!-- Left Column: Core Agent Modes -->
+                        <div class="card card-neon">
+                            <div class="card-header">
+                                <span class="header-line"></span>
+                                <h3>Core Containment Policy</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label>Autonomous Containment Mode</label>
+                                    <div class="radio-selectors">
+                                        <label class="radio-card {% if config.CONTAINMENT_MODE == 'safe' %}selected{% endif %}">
+                                            <input type="radio" name="containment_mode" value="safe" {% if config.CONTAINMENT_MODE == 'safe' %}checked{% endif %}>
+                                            <div class="radio-content">
+                                                <span class="radio-title">Audit & Alert Only</span>
+                                                <span class="radio-desc">Generates alerts and forensic log captures without active thread termination. Suitable for staging environments.</span>
+                                            </div>
+                                        </label>
+                                        <label class="radio-card {% if config.CONTAINMENT_MODE == 'standard' %}selected{% endif %}">
+                                            <input type="radio" name="containment_mode" value="standard" {% if config.CONTAINMENT_MODE == 'standard' %}checked{% endif %}>
+                                            <div class="radio-content">
+                                                <span class="radio-title">Standard EDR Block</span>
+                                                <span class="radio-desc">Progressive containment: thread suspension, outbound network block via firewall, restore backup snapshot, and target process termination.</span>
+                                            </div>
+                                        </label>
+                                        <label class="radio-card {% if config.CONTAINMENT_MODE == 'strict' %}selected{% endif %}">
+                                            <input type="radio" name="containment_mode" value="strict" {% if config.CONTAINMENT_MODE == 'strict' %}checked{% endif %}>
+                                            <div class="radio-content">
+                                                <span class="radio-title">Strict Zero-Latency Lock</span>
+                                                <span class="radio-desc">Instant termination on target process first, followed by volume shadow copy restores and network locks. Priority is zero file damage.</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group margin-top-lg">
+                                    <label for="watch_directories">Watch Directories (Comma separated)</label>
+                                    <textarea id="watch_directories" name="watch_directories" rows="3" class="form-control" placeholder="C:\Users\User\RanShield_Watch">{{ config.WATCH_DIRECTORIES | join(', ') }}</textarea>
+                                    <p class="help-text">RANSHIELD schedules separate filesystem events streams for each directory specified above.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Alert Thresholds & Integrations -->
+                        <div class="grid-1col">
+                            <div class="card card-neon">
+                                <div class="card-header">
+                                    <span class="header-line"></span>
+                                    <h3>Engine Heuristic Thresholds</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="entropy_threshold_default">Default Shannon Entropy Threshold</label>
+                                        <div class="input-slider-group">
+                                            <input type="range" id="entropy_threshold_default_slider" min="5.0" max="7.9" step="0.05" value="{{ config.DEFAULT_ENTROPY_THRESHOLD }}" oninput="document.getElementById('entropy_threshold_default').value = this.value">
+                                            <input type="number" id="entropy_threshold_default" name="entropy_threshold_default" min="5.0" max="7.9" step="0.05" value="{{ config.DEFAULT_ENTROPY_THRESHOLD }}" oninput="document.getElementById('entropy_threshold_default_slider').value = this.value" class="form-control width-small">
+                                            <span class="unit">bits/byte</span>
+                                        </div>
+                                        <p class="help-text">Theoretical limits: plaintext text files typically register 2.5-4.5, zip files 7.0-7.5, and strong AES encryptors 7.9-8.0.</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="io_rate_threshold_mb">Heuristic Write Speed Trigger</label>
+                                        <div class="input-slider-group">
+                                            <input type="range" id="io_rate_threshold_mb_slider" min="1.0" max="25.0" step="0.5" value="{{ config.IO_RATE_THRESHOLD / (1024 * 1024) }}" oninput="document.getElementById('io_rate_threshold_mb').value = this.value">
+                                            <input type="number" id="io_rate_threshold_mb" name="io_rate_threshold_mb" min="1.0" max="25.0" step="0.5" value="{{ config.IO_RATE_THRESHOLD / (1024 * 1024) }}" oninput="document.getElementById('io_rate_threshold_mb_slider').value = this.value" class="form-control width-small">
+                                            <span class="unit">MB/s</span>
+                                        </div>
+                                        <p class="help-text">Volume writes limit used in Layer 2 correlation checks alongside extension renaming.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-neon">
+                                <div class="card-header">
+                                    <span class="header-line"></span>
+                                    <h3>Integrations & SIEM Alerts</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="webhook_url">Slack / Discord Webhook URL</label>
+                                        <input type="url" id="webhook_url" name="webhook_url" class="form-control" placeholder="https://discord.com/api/webhooks/..." value="{{ config.WEBHOOK_URL }}">
+                                        <p class="help-text">Post JSON alert summaries automatically to security operations chat channels upon threat containment.</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="smtp_email">SMTP Notification Email Address</label>
+                                        <input type="email" id="smtp_email" name="smtp_email" class="form-control" placeholder="soc-alerts@enterprise.com" value="{{ config.SMTP_EMAIL }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rule Weights Matrix (Layer 3) -->
+                    <div class="card card-neon margin-top-lg">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>Layer 3: Behavioral Rule Weight Matrix</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="help-text text-center margin-bottom-md">Adjust individual scores allocated to monitored behavioral patterns. Threat scoring sum Sp is computed dynamically on the shared event bus.</p>
+                            
+                            <div class="weights-grid">
+                                {% for rule, weight in config.WEIGHTS.items() %}
+                                <div class="weight-control-card">
+                                    <div class="weight-title">{{ rule.replace('_', ' ').title() }}</div>
+                                    <div class="weight-slider-container">
+                                        <input type="range" name="weight_{{ rule }}" min="0.05" max="0.60" step="0.05" value="{{ weight }}" oninput="document.getElementById('val_{{ rule }}').innerText = parseFloat(this.value).toFixed(2)">
+                                        <span class="weight-value" id="val_{{ rule }}">{{ "%.2f" | format(weight) }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="form-actions margin-top-lg text-center">
+                                <button type="submit" class="btn btn-primary btn-large">Deploy Security Policies</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Make radio card selected states interactive
+        const radioCards = document.querySelectorAll('.radio-card');
+        radioCards.forEach(card => {
+            card.addEventListener('click', () => {
+                radioCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                card.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+    </script>
+</body>
+</html>

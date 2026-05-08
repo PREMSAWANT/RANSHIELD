@@ -1,0 +1,20 @@
+{
+    "containment_mode": "standard",
+    "watch_directories": [
+        "C:\\Users\\prems\\RanShield_Watch"
+    ],
+    "webhook_url": "",
+    "smtp_email": "",
+    "weights": {
+        "shadow_copy_deletion": 0.40,
+        "ransomnote_created": 0.30,
+        "mass_deletion": 0.25,
+        "onion_connection": 0.20,
+        "rapid_traversal": 0.15,
+        "child_process_spawned": 0.15,
+        "extension_mutated": 0.20,
+        "registry_persistence": 0.10
+    },
+    "entropy_threshold_default": 7.20,
+    "io_rate_threshold_mb": 5.0
+}

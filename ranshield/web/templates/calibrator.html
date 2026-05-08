@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RANSHIELD - Dynamic Workload Profiler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow"></span>
+                <h2>RANSHIELD</h2>
+                <p>Endpoint Protection</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/"><span class="icon">📈</span> Telemetry Console</a></li>
+                <li><a href="/dfir"><span class="icon">🔍</span> Forensic Logs</a></li>
+                <li><a href="/policies"><span class="icon">🛡️</span> Rule Policies</a></li>
+                <li><a href="/vault"><span class="icon">☣️</span> Quarantine Vault</a></li>
+                <li class="active"><a href="/calibrator"><span class="icon">⚙️</span> Workload Profiler</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="status-indicator active">
+                    <span class="dot"></span>
+                    <span class="text">AGENT ACTIVE</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1>Dynamic Workload Calibrator</h1>
+                    <p class="subtitle">Establish adaptive, workload-aware entropy thresholds ($\tau_{enc}$) per process class</p>
+                </div>
+            </header>
+
+            <div class="scroll-container">
+                <div class="grid-2col">
+                    <!-- Left: Calibration Progress Gauge -->
+                    <div class="card card-neon">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>Profiling System Status</h3>
+                        </div>
+                        <div class="card-body text-center py-lg">
+                            <div class="progress-radial-container">
+                                <div class="progress-radial-ring">
+                                    <div class="progress-text-display">
+                                        <span id="cal-percent" class="font-bold">0%</span>
+                                        <p id="cal-status-text" class="text-small text-muted">CALIBRATING</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-linear margin-top-md">
+                                <div class="progress-bar-fill" id="cal-bar-fill" style="width: 0%;"></div>
+                            </div>
+                            <p class="help-text margin-top-sm text-center">During the calibration phase, RANSHIELD monitors baseline operations to establish statistical bounds ($H \sim N(\mu, \sigma^2)$) for healthy executable workflows.</p>
+                            
+                            <button id="recalibrate-btn" class="btn btn-primary btn-large margin-top-lg">Recalibrate System Workloads</button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Math Explanation card -->
+                    <div class="card card-neon">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>Mathematical Foundations</h3>
+                        </div>
+                        <div class="card-body text-small">
+                            <h4>Formula (5): Adaptive Thresholding</h4>
+                            <p class="font-mono bg-dark p-xs rounded text-center margin-top-xs margin-bottom-sm">$$\tau_{enc} = \mu_H + 2.5 \cdot \sigma_H$$</p>
+                            <p>To avoid false positives from common applications that write high-entropy content (like compiling source files, compressed document saves, or image compression), RANSHIELD assigns distinct classes upon calibration finalization:</p>
+                            
+                            <ul class="text-muted list-styled margin-top-sm">
+                                <li><strong>Low Entropy Workloads (Office/Text):</strong> Processes executing typical plain text or simple structured writes are restricted to tighter thresholds ($\tau_{enc} = 5.2$ - $6.5$).</li>
+                                <li><strong>Medium Workloads (Media/Binary):</strong> Standard productivity utilities, image processors, and browsers are assigned standard thresholds ($\tau_{enc} = 6.5$ - $7.2$).</li>
+                                <li><strong>High Entropy Workloads (Compilers/Dev):</strong> Processes doing native zip, encrypting, or compiling operations are allocated maximum bounds ($\tau_{enc} = 7.2$ - $7.8$) to minimize false flags.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profiled Processes Grid -->
+                <div class="card card-neon margin-top-lg">
+                    <div class="card-header">
+                        <span class="header-line"></span>
+                        <h3>Profiled Application Workload Categories</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="telemetry-table" id="calibrator-table">
+                                <thead>
+                                    <tr>
+                                        <th>Application Executable</th>
+                                        <th>Workload Categorization</th>
+                                        <th>Mean Shannon Entropy ($\mu_H$)</th>
+                                        <th>Entropy Deviation ($\sigma_H$)</th>
+                                        <th>Dynamic Threshold ($\tau_{enc}$)</th>
+                                        <th>Calibrated Checkpoint</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cal-list">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-md">Checking workload profiling records...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const calPercent = document.getElementById('cal-percent');
+            const calStatusText = document.getElementById('cal-status-text');
+            const calBarFill = document.getElementById('cal-bar-fill');
+            const calList = document.getElementById('cal-list');
+            const recalibrateBtn = document.getElementById('recalibrate-btn');
+
+            function loadCalibratorStatus() {
+                fetch('/api/calibrator')
+                    .then(res => res.json())
+                    .then(data => {
+                        // Progress rendering
+                        const isCal = data.is_calibrating;
+                        const progress = parseFloat(data.calibration_progress || 0).toFixed(0);
+                        
+                        calPercent.innerText = isCal ? `${progress}%` : 'COMPLETE';
+                        calStatusText.innerText = isCal ? 'PROFILING ACTIVE' : 'PROTECTION SYSTEM ONLINE';
+                        calBarFill.style.width = isCal ? `${progress}%` : '100%';
+                        
+                        if (isCal) {
+                            calBarFill.classList.add('pulse');
+                        } else {
+                            calBarFill.classList.remove('pulse');
+                        }
+
+                        // Application Categories
+                        const items = data.profiled_processes || [];
+                        if (items.length === 0) {
+                            calList.innerHTML = `
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-lg">
+                                        ${isCal ? 'Currently profiling workloads in the background... Write to files inside the watch directory to generate profiling samples!' : 'No process workload profiles compiled yet.'}
+                                    </td>
+                                </tr>`;
+                            return;
+                        }
+
+                        calList.innerHTML = '';
+                        items.forEach(item => {
+                            const date = new Date(item.calibrated_at * 1000).toLocaleTimeString();
+                            let classBadge = 'badge-success';
+                            if (item.process_class === 'MEDIUM_ENTROPY') classBadge = 'badge-warning';
+                            if (item.process_class === 'HIGH_ENTROPY') classBadge = 'badge-danger';
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td><span class="font-bold text-teal">${item.exe_path.split('\\').pop()}</span><br><span class="text-xs text-muted font-mono">${item.exe_path}</span></td>
+                                <td><span class="badge ${classBadge}">${item.process_class.replace('_', ' ')}</span></td>
+                                <td class="font-mono">${parseFloat(item.mean_entropy).toFixed(4)}</td>
+                                <td class="font-mono">${parseFloat(item.std_entropy).toFixed(4)}</td>
+                                <td class="font-mono font-bold text-danger">${parseFloat(item.calibrated_threshold).toFixed(2)}</td>
+                                <td class="font-mono text-small">${date}</td>
+                            `;
+                            calList.appendChild(tr);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Calibration API error:', err);
+                    });
+            }
+
+            recalibrateBtn.addEventListener('click', () => {
+                if (confirm('Initiating system-wide recalibration wipes all current custom process thresholds and enters a 60-second profiling baseline mode. Are you sure you want to run recalibration?')) {
+                    fetch('/api/calibrator/recalibrate', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            alert(data.message);
+                            loadCalibratorStatus();
+                        })
+                        .catch(err => {
+                            alert('Recalibration failed: ' + err);
+                        });
+                }
+            });
+
+            // Poll stats every 2 seconds
+            loadCalibratorStatus();
+            setInterval(loadCalibratorStatus, 2000);
+        });
+    </script>
+</body>
+</html>

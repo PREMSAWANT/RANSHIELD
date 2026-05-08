@@ -1,10 +1,13 @@
 import os
 import sys
 import subprocess
+import shutil
+import hashlib
 import psutil
 import time
 from typing import Dict
-from ranshield.database import log_alert
+import ranshield.config as config
+from ranshield.database import log_alert, log_quarantine
 
 def is_admin() -> bool:
     """Check if the current script is running with Administrative privileges."""
@@ -17,110 +20,158 @@ def is_admin() -> bool:
     else:
         return os.getuid() == 0
 
+def calculate_sha256(filepath: str) -> str:
+    """Calculate the cryptographic SHA-256 hash of a file."""
+    sha256_hash = hashlib.sha256()
+    try:
+        with open(filepath, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    except Exception:
+        return "unknown_hash"
+
 class ResponseModule:
     @staticmethod
     def contain(pid: int, exe_path: str, threat_score: float, reason: str) -> Dict[str, bool]:
         """
-        Executes the automated four-stage containment workflow:
-        1. Process Suspension
-        2. Network Isolation
-        3. Snapshot Creation
-        4. Process Termination
+        Executes automated containment workflows based on configuration:
         
-        Returns a dict of status for each stage.
+        CONTAINMENT_MODE = "safe" (Monitor & Alert only, zero disruption)
+        CONTAINMENT_MODE = "strict" (Instant Kill first, followed by audit & backup)
+        CONTAINMENT_MODE = "standard" (Suspension -> Isolation -> Snapshot -> Kill & Quarantine)
         """
         results = {
             "suspended": False,
             "network_isolated": False,
             "snapshot_created": False,
-            "terminated": False
+            "terminated": False,
+            "quarantined": False
         }
         
-        print(f"\n[!] [RANSHIELD THREAT TRIGGERED] Sp={threat_score:.2f} >= Threshold! Threat: {reason}")
-        print(f"[!] Executing 4-Stage Containment on PID {pid} ({os.path.basename(exe_path)})...")
+        mode = config.CONTAINMENT_MODE.lower()
+        print(f"\n[INFO] [RANSHIELD TRIGGERED] Threat score breached Sp={threat_score:.2f} >= 0.75. Active Mode: {mode.upper()}")
+        print(f"[INFO] Threat Signature Match: {reason}")
         
-        # --- STAGE 1: Process Suspension ---
-        try:
-            p = psutil.Process(pid)
-            p.suspend()  # Sends SuspendThread-equivalent on Windows, SIGSTOP on Linux
-            results["suspended"] = True
-            print("[+] Stage 1: Process SUSPENDED successfully. I/O halted.")
-        except Exception as e:
-            print(f"[-] Stage 1 Failed: Unable to suspend process {pid}. Error: {e}")
-            
+        if mode == "safe":
+            # Safe Mode: Audit only, do not disrupt the process or system
+            print(f"[INFO] Safe Mode active. No containment measures will be enforced for PID {pid}.")
+            log_alert(pid, exe_path, threat_score, f"[SAFE MODE AUDIT Only] {reason}", "AUDITED_ONLY")
+            ResponseModule._trigger_notification(pid, exe_path, f"[SAFE MODE] {reason}", audit_only=True)
+            return results
+
+        # --- STRICT MODE: INSTANT TERMINATION ---
+        # Kill the process first to minimize file encryption latency
+        if mode == "strict":
+            print(f"[WARNING] Strict Mode active! Terminating process PID {pid} immediately to prevent encryption...")
+            try:
+                p = psutil.Process(pid)
+                p.kill()
+                results["terminated"] = True
+                print("[SUCCESS] Process killed instantly.")
+            except Exception as e:
+                if not psutil.pid_exists(pid):
+                    results["terminated"] = True
+                else:
+                    print(f"[-] Instant kill failed: {e}")
+
+        # --- STAGE 1: Process Suspension (Standard mode only, since strict has already terminated) ---
+        if mode == "standard" and not results["terminated"]:
+            try:
+                p = psutil.Process(pid)
+                p.suspend()
+                results["suspended"] = True
+                print(f"[SUCCESS] Process PID {pid} suspended. I/O writes paused.")
+            except Exception as e:
+                print(f"[-] Suspension failed: {e}")
+
         # --- STAGE 2: Network Isolation ---
-        # Block outbound connections for the offending executable via Windows Firewall
         if sys.platform == "win32":
             rule_name = f"RanShield-Block-PID-{pid}"
-            # Standard command to block outbound connections for this program
             cmd = f'netsh advfirewall firewall add rule name="{rule_name}" dir=out action=block program="{exe_path}" enable=yes'
             try:
-                # Run firewall command (requires admin privileges)
                 res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if res.returncode == 0:
                     results["network_isolated"] = True
-                    print("[+] Stage 2: Windows Firewall rule added. Outbound network isolated.")
+                    print("[SUCCESS] Outbound network traffic isolated via Windows Defender Firewall.")
                 else:
                     if "Administrator" in res.stderr or "privileges" in res.stderr:
-                        print("[-] Stage 2 Warning: Network isolation requires Administrative privileges.")
+                        print("[-] Isolation Warning: Firewall configurations require Administrative privileges.")
                     else:
-                        print(f"[-] Stage 2 Failed: netsh returned error. {res.stderr.strip()}")
+                        print(f"[-] Isolation Failed: {res.stderr.strip()}")
             except Exception as e:
-                print(f"[-] Stage 2 Failed: Network isolation command error: {e}")
+                print(f"[-] Isolation Error: {e}")
         else:
-            # Linux iptables network isolation
             cmd = f"iptables -A OUTPUT -m owner --pid-owner {pid} -j REJECT"
             try:
                 res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 if res.returncode == 0:
                     results["network_isolated"] = True
-                    print("[+] Stage 2: iptables rule added. Process network isolated.")
+                    print("[SUCCESS] Outbound network traffic isolated via iptables.")
                 else:
-                    print("[-] Stage 2 Warning: iptables command requires root privileges.")
+                    print("[-] Isolation Warning: iptables configurations require root privileges.")
             except Exception as e:
-                print(f"[-] Stage 2 Failed: iptables command error: {e}")
+                print(f"[-] Isolation Error: {e}")
 
-        # --- STAGE 3: Snapshot Creation ---
-        # Windows Volume Shadow Copy (VSS) or Linux LVM
+        # --- STAGE 3: Volume Snapshot / Backups ---
         if sys.platform == "win32":
-            # Command to create a VSS shadow copy of drive C:
-            # Note: wmic shadowcopy is deprecated but highly functional, or we can use powershell vss
             cmd = 'powershell -Command "vssadmin create shadow /for=C:"'
             try:
                 res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 if res.returncode == 0 or "Successfully created shadow copy" in res.stdout:
                     results["snapshot_created"] = True
-                    print("[+] Stage 3: Windows VSS shadow copy snapshot created.")
+                    print("[SUCCESS] Volume Shadow Copy (VSS) restore checkpoint created.")
                 else:
-                    # Alternative backup fallback for test sandbox (create a zip/rar copy of watched directory)
-                    print("[-] Stage 3 Warning: VSS snapshot creation requires Administrative privileges. Creating mock folder backup...")
+                    print("[-] Snapshot Warning: VSS requires Administrator rights. Executing local ZIP backup fallback...")
                     results["snapshot_created"] = ResponseModule._mock_backup_fallback()
             except Exception as e:
-                print(f"[-] Stage 3 Failed: VSS snapshot command error: {e}")
+                print(f"[-] Snapshot Error: {e}")
         else:
-            # Linux LVM snapshot or sync/backup fallback
-            print("[-] Stage 3: Linux LVM snapshot creation (Stubbed - LVM config-dependent). Creating mock folder backup...")
+            print("[-] Snapshot Warning: Linux LVM configuration required. Executing local ZIP backup fallback...")
             results["snapshot_created"] = ResponseModule._mock_backup_fallback()
 
-        # --- STAGE 4: Process Termination ---
-        try:
-            p = psutil.Process(pid)
-            p.kill()  # Force kill the process
-            results["terminated"] = True
-            print("[+] Stage 4: Process TERMINATED cleanly.")
-        except Exception as e:
-            # Check if already dead
-            if not psutil.pid_exists(pid):
+        # --- STAGE 4: Process Termination (Standard mode, or if instant kill failed) ---
+        if not results["terminated"]:
+            try:
+                p = psutil.Process(pid)
+                p.kill()
                 results["terminated"] = True
-                print("[+] Stage 4: Process was already terminated.")
-            else:
-                print(f"[-] Stage 4 Failed: Unable to terminate process {pid}. Error: {e}")
+                print("[SUCCESS] Process terminated.")
+            except Exception as e:
+                if not psutil.pid_exists(pid):
+                    results["terminated"] = True
+                    print("[SUCCESS] Process was already dead.")
+                else:
+                    print(f"[-] Process termination failed: {e}")
 
-        # Log alert to SQLite
-        action_summary = f"SUSPEND:{results['suspended']}|ISOLATE:{results['network_isolated']}|VSS:{results['snapshot_created']}|KILL:{results['terminated']}"
+        # --- QUARANTINE PHASE ---
+        # Safely extract and move the binary to our locked quarantine vault
+        if results["terminated"] and os.path.exists(exe_path) and os.path.isfile(exe_path):
+            try:
+                filename = os.path.basename(exe_path)
+                file_hash = calculate_sha256(exe_path)
+                file_size = os.path.getsize(exe_path)
+                
+                # Locked target path
+                timestamp = int(time.time())
+                quarantine_filename = f"{filename}.{timestamp}.quarantined"
+                quarantine_target = os.path.join(config.QUARANTINE_DIR, quarantine_filename)
+                
+                # Copy/Move the file to quarantine vault (using copy to keep original binary location for forensic audits)
+                shutil.copy2(exe_path, quarantine_target)
+                results["quarantined"] = True
+                
+                # Log quarantine database record
+                log_quarantine(exe_path, quarantine_target, file_hash, file_size, pid)
+                print(f"[SUCCESS] Threat binary quarantined to: {quarantine_target} (SHA256: {file_hash[:16]}...)")
+            except Exception as e:
+                print(f"[-] Quarantine Failed: Unable to move executable to secure vault. Error: {e}")
+
+        # Log active alert
+        action_summary = f"SUSPEND:{results['suspended']}|ISOLATE:{results['network_isolated']}|VSS:{results['snapshot_created']}|KILL:{results['terminated']}|QUARANTINE:{results['quarantined']}"
         log_alert(pid, exe_path, threat_score, reason, action_summary)
         
-        # Show Windows desktop notification (if on Windows)
+        # Show desktop popups
         ResponseModule._trigger_notification(pid, exe_path, reason)
         
         return results
@@ -129,50 +180,46 @@ class ResponseModule:
     def _mock_backup_fallback() -> bool:
         """Create a mock ZIP backup of the watched directory as a safe fallback when not running as administrator."""
         import zipfile
-        from ranshield.config import DEFAULT_WATCH_DIR
-        
-        backup_dir = os.path.join(os.path.dirname(DEFAULT_WATCH_DIR), "RanShield_Backups")
+        backup_dir = os.path.join(os.path.dirname(config.DEFAULT_WATCH_DIR), "RanShield_Backups")
         os.makedirs(backup_dir, exist_ok=True)
         
         timestamp = int(time.time())
         zip_path = os.path.join(backup_dir, f"ranshield_snapshot_{timestamp}.zip")
         
         try:
+            # Only backup watched directories configured
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(DEFAULT_WATCH_DIR):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, DEFAULT_WATCH_DIR)
-                        zipf.write(file_path, arcname)
-            print(f"[+] Fallback Snapshot: Watched files backed up to {zip_path}")
+                for watch_folder in config.WATCH_DIRECTORIES:
+                    if os.path.exists(watch_folder):
+                        for root, _, files in os.walk(watch_folder):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, watch_folder)
+                                zipf.write(file_path, arcname)
+            print(f"[SUCCESS] Backup fallbacks created: {zip_path}")
             return True
         except Exception as e:
-            print(f"[-] Fallback Snapshot Failed: {e}")
+            print(f"[-] Backup fallback failed: {e}")
             return False
 
     @staticmethod
-    def _trigger_notification(pid: int, exe_path: str, reason: str):
-        """Displays a desktop notification regarding the containment action."""
-        title = "RANSHIELD ALERT: Threat Blocked!"
-        message = f"Process {os.path.basename(exe_path)} (PID: {pid}) was terminated.\nReason: {reason}"
+    def _trigger_notification(pid: int, exe_path: str, reason: str, audit_only=False):
+        """Displays a desktop notification warning box regarding the threat."""
+        title = "RANSHIELD WARNING: Policy Audit!" if audit_only else "RANSHIELD ALERT: Threat Blocked!"
+        message = f"Process {os.path.basename(exe_path)} (PID: {pid}) triggered security policy.\nReason: {reason}"
         
         if sys.platform == "win32":
             try:
-                # Use win32api to show a standard message box in the background or use a system toast
-                # Let's try displaying a non-blocking Windows Toast or a simple popup
                 import ctypes
-                # MB_OK | MB_ICONWARNING = 0x00000000 | 0x00000030
-                # Run in a separate thread so it doesn't block containment execution
                 import threading
                 threading.Thread(
                     target=lambda: ctypes.windll.user32.MessageBoxW(0, message, title, 0x00000030),
                     daemon=True
                 ).start()
-            except Exception as e:
-                print(f"[-] Toast Notification failed: {e}")
+            except Exception:
+                pass
         else:
             try:
-                # Linux notify-send
                 subprocess.run(["notify-send", title, message], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except:
                 pass

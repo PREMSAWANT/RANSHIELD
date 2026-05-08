@@ -3,7 +3,8 @@ import sys
 import numpy as np
 import time
 from typing import Dict, List
-from ranshield.config import DEFAULT_ENTROPY_THRESHOLD, CALIBRATION_DURATION
+
+import ranshield.config as config
 from ranshield.database import save_calibration, get_calibration
 
 class CalibrationManager:
@@ -17,7 +18,7 @@ class CalibrationManager:
         """Start the calibration timer."""
         self.calibration_start_time = time.time()
         self.is_calibrating = True
-        print("[+] RANSHIELD: Calibration phase started (Duration: {}s).".format(CALIBRATION_DURATION))
+        print(f"[+] RANSHIELD: Calibration phase started (Duration: {config.CALIBRATION_DURATION}s).")
 
     def record_observation(self, exe_path: str, entropy: float):
         """Record an entropy observation for an executable during calibration."""
@@ -59,7 +60,7 @@ class CalibrationManager:
         
         for exe_path, values in self.entropy_observations.items():
             if len(values) < 3:
-                # Not enough samples to reliably calculate mean and standard deviation
+                # Not enough samples to calculate robust mean and standard deviation
                 continue
                 
             p_class = self.classify_process(exe_path)
@@ -100,4 +101,13 @@ class CalibrationManager:
         elif p_class == "development":
             return 7.2  # medium-entropy default
         else:
-            return DEFAULT_ENTROPY_THRESHOLD  # 7.2 general default
+            return config.DEFAULT_ENTROPY_THRESHOLD  # general default
+
+    def get_progress_percent(self) -> float:
+        """Calculate active calibration percentage elapsed."""
+        if not self.is_calibrating or self.calibration_start_time is None:
+            return 100.0
+            
+        elapsed = time.time() - self.calibration_start_time
+        percent = (elapsed / config.CALIBRATION_DURATION) * 100.0
+        return min(percent, 100.0)

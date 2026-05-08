@@ -51,7 +51,11 @@ def main():
     cal_thread = threading.Thread(target=run_calibration_timer, args=(calibration_mgr,), daemon=True)
     cal_thread.start()
     
-    # 6. Start blocking Flask web application on the main thread
+    # 6. Inject active daemon states into the Flask application context for dynamic web reloads
+    app.config["AGENT"] = agent
+    app.config["DETECTION_ENGINE"] = engine
+    app.config["CALIBRATION_MGR"] = calibration_mgr
+
     print(f"[INFO] Launching Flask dashboard on http://{HOST}:{PORT}")
     try:
         app.run(host=HOST, port=PORT, debug=DEBUG, use_reloader=False)

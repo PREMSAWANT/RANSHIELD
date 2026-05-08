@@ -4,51 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RANSHIELD - Real-Time Ransomware Detection Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <!-- Chart.js CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div>
-                <div class="brand">
-                    <div class="brand-logo">R</div>
-                    <span class="brand-name">RANSHIELD</span>
-                </div>
-                <nav>
-                    <ul class="nav-menu">
-                        <li class="nav-item active">
-                            <a href="/">
-                                <span class="nav-icon">&#9638;</span> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/dfir">
-                                <span class="nav-icon">&#9643;</span> DFIR Forensics
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow"></span>
+                <h2>RANSHIELD</h2>
+                <p>Endpoint Protection</p>
             </div>
-            
+            <ul class="nav-links">
+                <li class="active"><a href="/"><span class="icon">📈</span> Telemetry Console</a></li>
+                <li><a href="/dfir"><span class="icon">🔍</span> Forensic Logs</a></li>
+                <li><a href="/policies"><span class="icon">🛡️</span> Rule Policies</a></li>
+                <li><a href="/vault"><span class="icon">☣️</span> Quarantine Vault</a></li>
+                <li><a href="/calibrator"><span class="icon">⚙️</span> Workload Profiler</a></li>
+            </ul>
             <div class="sidebar-footer">
-                <p>Version 1.0.0 (Python)</p>
-                <div class="system-status">
-                    <span class="status-indicator"></span>
-                    <span>AGENT ACTIVE</span>
+                <div class="status-indicator active" id="system-status-indicator">
+                    <span class="dot"></span>
+                    <span class="text" id="status-text">AGENT ACTIVE</span>
                 </div>
             </div>
-        </aside>
+        </nav>
 
         <!-- Main Workspace -->
         <main class="main-content">
             <!-- Header -->
-            <header class="top-header">
-                <div class="header-title">
+            <header class="content-header">
+                <div>
                     <h1>Ransomware Detection Platform</h1>
-                    <p>Real-time entropy, I/O rates, and heuristic process threat scores.</p>
+                    <p class="subtitle">Real-time entropy, I/O rates, and heuristic process threat scores</p>
                 </div>
                 <div class="header-actions">
                     <button class="btn btn-secondary" id="btn-reset">Reset Telemetry</button>
@@ -56,130 +46,134 @@
                 </div>
             </header>
 
-            <!-- Metrics Grid -->
-            <section class="metrics-grid">
-                <div class="metric-card success">
-                    <p class="metric-label">Active Watch Directory</p>
-                    <p class="metric-value" style="font-size: 1.1rem; word-break: break-all; margin: 0.6rem 0;" id="watch-path">Resolving...</p>
-                    <p class="metric-sub">Files watched continuously</p>
-                </div>
-                <div class="metric-card">
-                    <p class="metric-label">Total File Events</p>
-                    <p class="metric-value" id="stat-total-events">0</p>
-                    <p class="metric-sub">I/O read/write/rename activities</p>
-                </div>
-                <div class="metric-card warning">
-                    <p class="metric-label">Monitored PIDs</p>
-                    <p class="metric-value" id="stat-pids">0</p>
-                    <p class="metric-sub">Active process history contexts</p>
-                </div>
-                <div class="metric-card danger" id="card-alerts">
-                    <p class="metric-label">Contained Threats</p>
-                    <p class="metric-value" id="stat-threats">0</p>
-                    <p class="metric-sub">PIDs suspended or terminated</p>
-                </div>
-            </section>
-
-            <!-- Dashboard Charts and Active Threats Row -->
-            <section class="dashboard-grid">
-                <!-- Left Main Section -->
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <!-- Entropy Analysis Graph -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <h2 class="panel-title">Shannon Entropy Heatmap Timeline</h2>
-                                <p class="panel-subtitle">Computes randomness per 4KB write. Values above threshold indicate potential encryption.</p>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="entropyChart"></canvas>
-                        </div>
+            <div class="scroll-container">
+                <!-- Metrics Grid -->
+                <section class="metrics-grid">
+                    <div class="metric-card success">
+                        <p class="metric-label">Active Watch Directory</p>
+                        <p class="metric-value font-mono text-small text-break" id="watch-path">Resolving...</p>
+                        <p class="metric-sub">Files watched continuously</p>
                     </div>
-
-                    <!-- Process I/O Rate Timeline -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <h2 class="panel-title">Active Process Write Bandwidth</h2>
-                                <p class="panel-subtitle">Tracks raw write rate (MB/s) of active processes. Threshold is 5.0 MB/s.</p>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="ioChart"></canvas>
-                        </div>
+                    <div class="metric-card">
+                        <p class="metric-label">Total File Events</p>
+                        <p class="metric-value" id="stat-total-events">0</p>
+                        <p class="metric-sub">I/O read/write/rename activities</p>
                     </div>
-                </div>
+                    <div class="metric-card warning">
+                        <p class="metric-label">Monitored PIDs</p>
+                        <p class="metric-value" id="stat-pids">0</p>
+                        <p class="metric-sub">Active process histories</p>
+                    </div>
+                    <div class="metric-card danger" id="card-alerts">
+                        <p class="metric-label">Quarantined/Blocked</p>
+                        <p class="metric-value" id="stat-threats">0</p>
+                        <p class="metric-sub">Malicious processes contained</p>
+                    </div>
+                </section>
 
-                <!-- Right Sidebar Section -->
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <!-- Active Threats Alerts List -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <h2 class="panel-title">Security Incidents</h2>
-                                <p class="panel-subtitle">Real-time threat scores & automatic containments.</p>
+                <!-- Charts and Stream Row -->
+                <section class="dashboard-grid">
+                    <!-- Charts Column (Left) -->
+                    <div class="flex-column gap-md">
+                        <!-- Entropy Analysis Graph -->
+                        <div class="card card-neon">
+                            <div class="card-header">
+                                <span class="header-line"></span>
+                                <h3>Shannon Entropy Heatmap Timeline</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="help-text">Computes mathematical randomness per block. Spikes indicate potential encryption activity.</p>
+                                <div class="chart-container">
+                                    <canvas id="entropyChart"></canvas>
+                                </div>
                             </div>
                         </div>
-                        <div class="alerts-container" id="alerts-list">
-                            <div class="event-stream-item" style="justify-content: center; color: var(--text-secondary); border-style: dashed;">
-                                <p>No active security threats detected.</p>
+
+                        <!-- Process I/O Rate Timeline -->
+                        <div class="card card-neon">
+                            <div class="card-header">
+                                <span class="header-line"></span>
+                                <h3>Active Process Write Bandwidth</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="help-text">Tracks raw write rate (MB/s) of active processes. Standard trigger limit is 5.0 MB/s.</p>
+                                <div class="chart-container">
+                                    <canvas id="ioChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Live File Event stream -->
-                    <div class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <h2 class="panel-title">Real-Time Event Stream</h2>
-                                <p class="panel-subtitle">Live file modification feed.</p>
+                    <!-- Live Streams Column (Right) -->
+                    <div class="flex-column gap-md">
+                        <!-- Active Threats Alerts List -->
+                        <div class="card card-neon card-fill-height">
+                            <div class="card-header">
+                                <span class="header-line"></span>
+                                <h3>Security Alerts & Containments</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="alerts-container" id="alerts-list">
+                                    <div class="stream-item-placeholder text-center text-muted">
+                                        <p>No active security threats detected.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="event-stream-list" id="event-stream">
-                            <div class="event-stream-item" style="justify-content: center; color: var(--text-secondary); border-style: dashed;">
-                                <p>Awaiting file system changes...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            <!-- Bottom Row Process Scores Table -->
-            <section class="full-width-grid">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2 class="panel-title">Monitored Process Threat Matrix</h2>
-                            <p class="panel-subtitle">Aggregated metrics and multi-signal scoring per running process.</p>
+                        <!-- Live File Event stream -->
+                        <div class="card card-neon card-fill-height">
+                            <div class="card-header">
+                                <span class="header-line"></span>
+                                <h3>Real-Time Event Stream</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="event-stream-list" id="event-stream">
+                                    <div class="stream-item-placeholder text-center text-muted">
+                                        <p>Awaiting file system changes...</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="table-container">
-                        <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>PID</th>
-                                    <th>Executable Name</th>
-                                    <th>Path</th>
-                                    <th>Event Count</th>
-                                    <th>Max Threat Score</th>
-                                    <th>Heuristic Signals Detected</th>
-                                    <th>Imposed Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="process-table-body">
-                                <tr>
-                                    <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No active process histories monitored.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                </section>
+
+                <!-- Process Scores Matrix Table (Bottom) -->
+                <section class="margin-top-lg">
+                    <div class="card card-neon">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>Monitored Process Threat Matrix</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="telemetry-table">
+                                    <thead>
+                                        <tr>
+                                            <th>PID</th>
+                                            <th>Executable Image</th>
+                                            <th>Path Location</th>
+                                            <th>File Event Count</th>
+                                            <th>Max Threat Score ($S_p$)</th>
+                                            <th>Heuristic Signals</th>
+                                            <th>Applied Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="process-table-body">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-md">No active process histories monitored.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
         </main>
     </div>
 
     <!-- Script imports -->
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

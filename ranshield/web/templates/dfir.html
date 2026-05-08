@@ -3,122 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RANSHIELD - DFIR Forensics Reports</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>RANSHIELD - Forensic Investigations & Backups</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div>
-                <div class="brand">
-                    <div class="brand-logo">R</div>
-                    <span class="brand-name">RANSHIELD</span>
-                </div>
-                <nav>
-                    <ul class="nav-menu">
-                        <li class="nav-item">
-                            <a href="/">
-                                <span class="nav-icon">&#9638;</span> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item active">
-                            <a href="/dfir">
-                                <span class="nav-icon">&#9643;</span> DFIR Forensics
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-glow"></span>
+                <h2>RANSHIELD</h2>
+                <p>Endpoint Protection</p>
             </div>
-            
+            <ul class="nav-links">
+                <li><a href="/"><span class="icon">📈</span> Telemetry Console</a></li>
+                <li class="active"><a href="/dfir"><span class="icon">🔍</span> Forensic Logs</a></li>
+                <li><a href="/policies"><span class="icon">🛡️</span> Rule Policies</a></li>
+                <li><a href="/vault"><span class="icon">☣️</span> Quarantine Vault</a></li>
+                <li><a href="/calibrator"><span class="icon">⚙️</span> Workload Profiler</a></li>
+            </ul>
             <div class="sidebar-footer">
-                <p>Version 1.0.0 (Python)</p>
-                <div class="system-status">
-                    <span class="status-indicator"></span>
-                    <span>AGENT ACTIVE</span>
+                <div class="status-indicator active">
+                    <span class="dot"></span>
+                    <span class="text">AGENT ACTIVE</span>
                 </div>
             </div>
-        </aside>
+        </nav>
 
         <!-- Main Workspace -->
         <main class="main-content">
             <!-- Header -->
-            <header class="top-header">
-                <div class="header-title">
-                    <h1>Digital Forensics & Incident Response (DFIR)</h1>
-                    <p>Comprehensive threat timeline and localized forensic artifact reviews.</p>
+            <header class="content-header">
+                <div>
+                    <h1>Digital Forensics & Incident Response</h1>
+                    <p class="subtitle">Complete threat timeline, pre/post-entropy tracking, and self-healing backup restorations</p>
                 </div>
                 <div class="header-actions">
-                    <a href="/dfir/export" class="btn btn-primary">Download Incident Report (.MD)</a>
+                    <a href="/dfir/export" class="btn btn-primary">Download Forensics Report (.MD)</a>
                 </div>
             </header>
 
-            <!-- Main Forensic Analysis Block -->
-            <section class="full-width-grid" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2 class="panel-title">Active Forensic Timeline</h2>
-                            <p class="panel-subtitle">Review localized events leading up to containment trigger. Tracks pre/post-entropy transitions.</p>
+            <div class="scroll-container">
+                <!-- Self-Healing Recovery Status Notice (Initially Hidden) -->
+                <div id="restore-alert" class="alert alert-success hidden">
+                    <h4 id="restore-alert-title">Folder Restored Successfully</h4>
+                    <p id="restore-alert-text">Files recovered from pre-encryption snapshots.</p>
+                </div>
+
+                <div class="grid-1col">
+                    <!-- Table 1: Active Forensic Event Timeline -->
+                    <div class="card card-neon">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>Detailed Forensic Activity Ledger</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="telemetry-table" style="font-size: 0.85rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>PID</th>
+                                            <th>Executable Image</th>
+                                            <th>File Event</th>
+                                            <th>Target Resource Path</th>
+                                            <th>Entropy Before</th>
+                                            <th>Entropy After</th>
+                                            <th>Scoring (Sp)</th>
+                                            <th>Enforced Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dfir-timeline-body">
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-lg">Awaiting telemetry logs...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="table-container">
-                        <table class="custom-table" style="font-size: 0.85rem;">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>PID</th>
-                                    <th>Process</th>
-                                    <th>Event</th>
-                                    <th>Target Resource Path</th>
-                                    <th>Entropy Before</th>
-                                    <th>Entropy After</th>
-                                    <th>Fused Score (Sp)</th>
-                                    <th>Enforced Decision</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dfir-timeline-body">
-                                <tr>
-                                    <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 3rem;">Awaiting incident telemetry or normal monitoring activity.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <h2 class="panel-title">Secured Volume Backups / Fallback Snapshots</h2>
-                            <p class="panel-subtitle">Active Volume Shadow Copy status and secure directory archives.</p>
+
+                    <!-- Table 2: Fallback Backups & Active Snapshots -->
+                    <div class="card card-neon margin-top-lg">
+                        <div class="card-header">
+                            <span class="header-line"></span>
+                            <h3>System Restore Checkpoints & Fallback Snapshots</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="help-text margin-bottom-md">Whenever a process breaches the standard safety score, RANSHIELD creates Volume Shadow Copies (VSS) or secure local archive backups inside your user directory to establish self-healing checkpoints.</p>
+                            
+                            <div class="table-wrapper">
+                                <table class="telemetry-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Created Checkpoint</th>
+                                            <th>Backup Mechanism</th>
+                                            <th>Target Protection Path</th>
+                                            <th>Integrity Status</th>
+                                            <th>Self-Healing Recovery Controls</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="backup-table-body">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-md">No restoration checkpoints exist yet. Checkpoints are dynamically generated upon threat mitigation blocks.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div class="table-container">
-                        <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>Backup Timestamp</th>
-                                    <th>Mechanism Used</th>
-                                    <th>Target Partition / Path</th>
-                                    <th>Integrity Verification</th>
-                                    <th>Restore Option</th>
-                                </tr>
-                            </thead>
-                            <tbody id="backup-table-body">
-                                <tr>
-                                    <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">No restore checkpoints have been triggered yet. Checkpoints are automatically generated upon ransomware score breach.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
     <script>
-        // Real-time fetching of detailed DFIR records
         function formatTime(epochSecs) {
             const date = new Date(epochSecs * 1000);
             return date.toLocaleTimeString() + '.' + String(date.getMilliseconds()).padStart(3, '0');
@@ -134,7 +134,7 @@
                 const backupBody = document.getElementById('backup-table-body');
                 
                 if (events.length === 0) {
-                    timelineBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 3rem;">No telemetry recorded. Run tests in the watch directory to generate activity.</td></tr>`;
+                    timelineBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-lg">No event logs captured. Generate file changes in the watch folder to begin monitoring.</td></tr>`;
                     return;
                 }
                 
@@ -152,32 +152,33 @@
                     if (e.action_taken === 'TERMINATED' || e.action_taken === 'KILL') badgeClass = 'badge-terminated';
                     else if (e.action_taken === 'SUSPENDED') badgeClass = 'badge-suspended';
                     else if (e.action_taken === 'CALIBRATION') badgeClass = 'badge-calibration';
+                    else if (e.action_taken === 'AUDITED') badgeClass = 'badge-warning';
                     
                     timelineHtml += `
                         <tr>
-                            <td style="font-family: monospace;">${formatTime(e.timestamp)}</td>
-                            <td>${e.pid}</td>
-                            <td style="font-weight: 500;">${name}</td>
-                            <td><span class="badge ${e.event_type === 'DELETE' ? 'badge-terminated' : 'badge-monitor'}">${e.event_type}</span></td>
-                            <td style="font-family: monospace; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${e.file_path}">${e.file_path}</td>
-                            <td style="font-family: monospace;">${entBefore}</td>
-                            <td style="font-family: monospace; font-weight: bold; color: ${e.entropy_after > 7.0 ? 'var(--accent-red)' : 'var(--accent-teal)'};">${entAfter}</td>
-                            <td style="font-family: monospace; font-weight: bold;">${threatScore}</td>
+                            <td class="font-mono text-small">${formatTime(e.timestamp)}</td>
+                            <td class="font-mono">${e.pid}</td>
+                            <td><span class="font-bold text-teal">${name}</span></td>
+                            <td><span class="badge ${e.event_type === 'DELETE' ? 'badge-danger' : 'badge-primary'}">${e.event_type}</span></td>
+                            <td class="font-mono text-small text-break" title="${e.file_path}">${e.file_path}</td>
+                            <td class="font-mono">${entBefore}</td>
+                            <td class="font-mono font-bold ${e.entropy_after > 7.0 ? 'text-danger' : 'text-teal'}">${entAfter}</td>
+                            <td class="font-mono font-bold">${threatScore}</td>
                             <td><span class="badge ${badgeClass}">${e.action_taken}</span></td>
                         </tr>
                     `;
 
-                    // Parse fallback backup logs from actions
+                    // Parse backups from terminated threats or actual backup checkpoints
                     if (e.action_taken === 'TERMINATED' || e.action_taken === 'KILL') {
                         backupCount++;
                         const backupTimeStr = new Date(e.timestamp * 1000).toLocaleString();
                         backupHtml += `
                             <tr>
-                                <td>${backupTimeStr}</td>
-                                <td><span class="badge badge-success">VSS / ZIP Fallback</span></td>
-                                <td style="font-family: monospace;">C:\\Users\\...\\RanShield_Backups\\</td>
+                                <td class="font-mono">${backupTimeStr}</td>
+                                <td><span class="badge badge-success">VSS / ZIP Backup</span></td>
+                                <td class="font-mono text-small">C:\\Users\\...\\RanShield_Backups\\</td>
                                 <td><span class="badge badge-success">Verified Secure</span></td>
-                                <td><button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="alert('In a production environment, this will restore the selected snapshot to the watched directory.')">Restore Directory</button></td>
+                                <td><button class="btn btn-primary btn-small restore-folder-btn">Recover Files</button></td>
                             </tr>
                         `;
                     }
@@ -186,10 +187,53 @@
                 timelineBody.innerHTML = timelineHtml;
                 if (backupCount > 0) {
                     backupBody.innerHTML = backupHtml;
+                    attachRestoreListeners();
+                } else {
+                    backupBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-md">No restoration checkpoints exist yet. Checkpoints are dynamically generated upon threat mitigation blocks.</td></tr>`;
                 }
             } catch (err) {
-                console.error("Failed to fetch DFIR telemetry: ", err);
+                console.error("Forensics Fetch Error:", err);
             }
+        }
+
+        function attachRestoreListeners() {
+            document.querySelectorAll('.restore-folder-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Reverting your folder unzips and restores all original, healthy plain-text files from your latest secure backup checkpoint, overwriting any encrypted variants. Do you want to initiate self-healing recovery?')) {
+                        btn.disabled = true;
+                        btn.innerText = 'Restoring...';
+                        
+                        fetch('/api/restore', { method: 'POST' })
+                            .then(res => res.json())
+                            .then(data => {
+                                const alertBox = document.getElementById('restore-alert');
+                                const alertTitle = document.getElementById('restore-alert-title');
+                                const alertText = document.getElementById('restore-alert-text');
+                                
+                                alertBox.classList.remove('hidden');
+                                if (data.status === 'success') {
+                                    alertBox.className = 'alert alert-success';
+                                    alertTitle.innerText = 'Self-Healing Remediation Complete!';
+                                    alertText.innerText = `Successfully unzipped recovery archive ${data.archive} and restored ${data.restored_count} healthy documents back to the watch folder!`;
+                                } else {
+                                    alertBox.className = 'alert alert-danger';
+                                    alertTitle.innerText = 'Restoration Failed';
+                                    alertText.innerText = data.error;
+                                }
+                                
+                                btn.disabled = false;
+                                btn.innerText = 'Recover Files';
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                fetchDfirData(); // refresh logs
+                            })
+                            .catch(err => {
+                                alert('Connection Error: ' + err);
+                                btn.disabled = false;
+                                btn.innerText = 'Recover Files';
+                            });
+                    }
+                });
+            });
         }
 
         // Run fetch on mount and setup polling

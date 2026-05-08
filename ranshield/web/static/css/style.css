@@ -1,31 +1,33 @@
 /* Core Design System for RANSHIELD Endpoint Security Dashboard */
-/* Advanced Cyber Tactical Hacker Command Center Theme */
+/* Combined Enterprise Security SaaS and Tactical Cyber Defense HUD Theme */
 
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #020306;
-    --bg-secondary: #05080f;
-    --bg-tertiary: #0a0e1a;
-    --border-color: #102135;
-    --text-primary: #e6f2ff;
-    --text-secondary: #5e7d97;
+    /* Rich, Deep Space Slate Palette */
+    --bg-primary: #050911;
+    --bg-secondary: #0b111e;
+    --bg-tertiary: #111a2e;
+    --border-color: #1b2a47;
+    --text-primary: #f1f5f9;
+    --text-secondary: #829ab1;
     
-    /* Neon Cybersecurity Matrix Accents */
-    --accent-cyan: #00f0ff;
-    --accent-green: #39ff14;
-    --accent-red: #ff003c;
-    --accent-orange: #ff9d00;
-    --accent-yellow: #f5f100;
-    --accent-purple: #bd00ff;
+    /* Harmonized Cybersecurity Indicators (High-End SaaS Accents) */
+    --accent-blue: #00d2ff;
+    --accent-teal: #00e676;
+    --accent-red: #ff1744;
+    --accent-orange: #ff9100;
+    --accent-yellow: #ffd600;
+    --accent-purple: #d500f9;
     
-    --font-sans: 'Share Tech Mono', monospace;
+    /* Typography */
+    --font-sans: 'Outfit', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     
-    --hud-glow-cyan: 0 0 15px rgba(0, 240, 255, 0.3);
-    --hud-glow-green: 0 0 15px rgba(57, 255, 20, 0.3);
-    --hud-glow-red: 0 0 20px rgba(255, 0, 60, 0.4);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --card-shadow: 0 10px 30px rgba(2, 4, 8, 0.5);
+    --glow-cyan: 0 0 20px rgba(0, 210, 255, 0.2);
+    --glow-red: 0 0 20px rgba(255, 23, 68, 0.2);
 }
 
 * {
@@ -36,49 +38,41 @@
 
 body {
     background-color: var(--bg-primary);
-    /* Immersive scanline CRT holographic grid overlay */
-    background-image: 
-        radial-gradient(circle at 50% 50%, rgba(10, 20, 35, 0.4) 0%, rgba(2, 3, 6, 1) 100%),
-        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), 
-        linear-gradient(90deg, rgba(57, 255, 20, 0.02), rgba(0, 240, 255, 0.01), rgba(255, 0, 60, 0.01));
-    background-size: 100% 100%, 100% 4px, 6px 100%;
+    background-image: radial-gradient(circle at 50% 0%, rgba(17, 26, 46, 0.6) 0%, rgba(5, 9, 17, 1) 80%);
     color: var(--text-primary);
     font-family: var(--font-sans);
     overflow-x: hidden;
-    line-height: 1.4;
-    letter-spacing: 0.5px;
+    line-height: 1.5;
 }
 
-/* Custom Tactical Scrollbars */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
 }
 ::-webkit-scrollbar-track {
     background: var(--bg-primary);
-    border-left: 1px solid var(--border-color);
 }
 ::-webkit-scrollbar-thumb {
     background: var(--border-color);
+    border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-cyan);
-    box-shadow: var(--hud-glow-cyan);
+    background: var(--accent-blue);
 }
 
-/* App Container Layout */
+/* Layout */
 .app-container {
     display: flex;
     min-height: 100vh;
-    position: relative;
 }
 
-/* Sidebar Navigation - Cyber HUD Column */
+/* Sidebar Navigation - Corporate EDR Console Look */
 .sidebar {
-    width: 280px;
+    width: 270px;
     background-color: var(--bg-secondary);
-    border-right: 2px solid var(--border-color);
-    padding: 2rem 1.25rem;
+    border-right: 1px solid var(--border-color);
+    padding: 2.25rem 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -90,44 +84,46 @@ body {
 .sidebar-brand {
     position: relative;
     padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px dashed var(--border-color);
+    margin-bottom: 2rem;
 }
 
 .sidebar-brand h2 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--accent-cyan);
-    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-    font-family: var(--font-sans);
+    letter-spacing: 2px;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.sidebar-brand h2 span {
+    color: var(--accent-blue);
 }
 
 .sidebar-brand p {
-    font-size: 0.7rem;
-    color: var(--accent-green);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 4px;
-    margin-top: 0.25rem;
-    text-shadow: 0 0 5px rgba(57, 255, 20, 0.4);
+    letter-spacing: 3px;
+    margin-top: 0.35rem;
+    font-weight: 600;
 }
 
 .brand-glow {
     position: absolute;
-    top: -20px;
-    left: -20px;
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, rgba(0,0,0,0) 70%);
+    top: -30px;
+    left: -30px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, rgba(0,0,0,0) 70%);
     pointer-events: none;
 }
 
-/* Nav Links - Tactical HUD Selection list */
+/* Nav Links - Professional EDR Workspace Navigation */
 .nav-links {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
     flex-grow: 1;
 }
 
@@ -138,30 +134,25 @@ body {
 .nav-links a {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.9rem 1.2rem;
+    gap: 0.9rem;
+    padding: 0.85rem 1.15rem;
     color: var(--text-secondary);
     text-decoration: none;
-    border: 1px solid transparent;
+    border-radius: 8px;
     font-weight: 500;
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    font-size: 0.95rem;
     transition: var(--transition-smooth);
 }
 
-/* Interactive Cybernetic Hover & Active States */
 .nav-links li.active a {
-    color: var(--accent-cyan);
-    background-color: rgba(0, 240, 255, 0.04);
-    border: 1px solid var(--accent-cyan);
-    box-shadow: inset 4px 0 0 var(--accent-cyan), 0 0 10px rgba(0, 240, 255, 0.1);
+    color: #fff;
+    background-color: var(--bg-tertiary);
+    box-shadow: inset 4px 0 0 var(--accent-blue);
 }
 
 .nav-links a:hover {
-    color: var(--text-primary);
-    background-color: rgba(57, 255, 20, 0.02);
-    border: 1px solid var(--border-color);
+    color: #fff;
+    background-color: rgba(17, 26, 46, 0.4);
 }
 
 .icon-svg {
@@ -181,35 +172,35 @@ body {
 }
 
 .nav-links li.active a .nav-svg {
-    color: var(--accent-cyan);
-    filter: drop-shadow(0 0 5px var(--accent-cyan));
+    color: var(--accent-blue);
+    filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.4));
 }
 
 .nav-links a:hover .nav-svg {
-    color: var(--accent-green);
-    filter: drop-shadow(0 0 5px var(--accent-green));
+    color: #fff;
 }
 
-/* Sidebar Footer Monitor Agent status */
+/* Active Monitoring Agent Info */
 .sidebar-footer {
     padding-top: 1.5rem;
-    border-top: 1px dashed var(--border-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .status-indicator {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: rgba(10, 14, 26, 0.8);
+    padding: 0.8rem 1.1rem;
+    background: rgba(17, 26, 46, 0.3);
     border: 1px solid var(--border-color);
-    font-size: 0.85rem;
-    letter-spacing: 1.5px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 1px;
 }
 
 .status-indicator.active {
-    border-color: var(--accent-green);
-    box-shadow: 0 0 8px rgba(57, 255, 20, 0.1);
+    border-color: rgba(0, 230, 118, 0.25);
 }
 
 .status-indicator .dot {
@@ -221,86 +212,68 @@ body {
 }
 
 .status-indicator.active .dot {
-    background-color: var(--accent-green);
-    box-shadow: 0 0 8px var(--accent-green);
-    animation: pulse 1.8s infinite;
+    background-color: var(--accent-teal);
+    box-shadow: 0 0 8px var(--accent-teal);
+    animation: active-pulse 2s infinite;
 }
 
 .status-indicator.active .text {
-    color: var(--accent-green);
-    font-weight: bold;
+    color: var(--accent-teal);
+    font-weight: 600;
 }
 
 /* Main Workspace Content Area */
 .main-content {
     flex-grow: 1;
-    margin-left: 280px;
-    padding: 2.25rem 2.5rem;
+    margin-left: 270px;
+    padding: 2.25rem 2.75rem;
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
 }
 
-/* Cyber Header Styling */
+/* Professional App Header */
 .content-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1.25rem;
-    border-bottom: 2px solid var(--border-color);
-    position: relative;
-}
-
-.content-header::after {
-    content: "SYS_STATUS: ONLINE // SECURE";
-    position: absolute;
-    bottom: -8px;
-    right: 0;
-    font-size: 0.65rem;
-    color: var(--accent-green);
-    letter-spacing: 2px;
-    font-family: var(--font-mono);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .content-header h1 {
-    font-size: 2.2rem;
+    font-size: 1.85rem;
     font-weight: 700;
-    letter-spacing: 2px;
     color: #fff;
-    text-transform: uppercase;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
 
 .content-header .subtitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-top: 0.35rem;
-    font-family: var(--font-sans);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    margin-top: 0.25rem;
 }
 
-/* Interactive scroll section */
+/* Scrollable Container Wrapper */
 .scroll-container {
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 0.5rem;
 }
 
-/* Tactical Command grids */
+/* Grid Layouts */
 .grid-4col {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
 .grid-3col {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
@@ -318,84 +291,63 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Advanced Tactical Hacker Card Container */
+/* Professional Glassmorphic Dashboard Cards */
 .card {
-    background: rgba(5, 8, 15, 0.85);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
+    border-radius: 12px;
     padding: 1.5rem;
-    position: relative;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--card-shadow);
     transition: var(--transition-smooth);
 }
 
-/* Left neon hazard borders depending on status */
 .card-neon {
-    border-left: 3px solid var(--accent-cyan);
-}
-
-.card-neon::after {
-    content: "";
-    position: absolute;
-    top: 0; right: 0;
-    width: 12px; height: 12px;
-    border-top: 2px solid var(--accent-cyan);
-    border-right: 2px solid var(--accent-cyan);
-}
-
-.card-neon::before {
-    content: "";
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 6px; height: 6px;
-    background: var(--accent-cyan);
+    border-left: 4px solid var(--accent-blue);
 }
 
 .card:hover {
-    border-color: rgba(0, 240, 255, 0.4);
-    box-shadow: 0 0 25px rgba(0, 240, 255, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(0, 210, 255, 0.25);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* Card Headers */
+/* Card Header Section styling */
 .card-header {
     display: flex;
     align-items: center;
     margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(16, 33, 53, 0.6);
-    position: relative;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .card-header .header-line {
     display: inline-block;
-    width: 6px;
-    height: 18px;
-    background-color: var(--accent-cyan);
+    width: 4px;
+    height: 16px;
+    background-color: var(--accent-blue);
+    border-radius: 2px;
     margin-right: 0.75rem;
 }
 
 .card-header h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--accent-cyan);
-    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
 }
 
-/* Quick Metrics Cards in HUD styling */
+/* Dashboard Quick Metrics Panels */
 .metric-card {
-    border-left: 3px solid var(--accent-cyan);
-    background: linear-gradient(135deg, rgba(5, 8, 15, 0.9) 0%, rgba(10, 14, 26, 0.9) 100%);
+    border-left: 4px solid var(--accent-blue);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(17, 26, 46, 0.4) 100%);
 }
 
 .metric-card.alert-active {
     border-left-color: var(--accent-red);
-    box-shadow: inset 0 0 15px rgba(255, 0, 60, 0.05);
-    animation: breach-pulse 3s infinite;
 }
 
 .metric-card.events-processed {
-    border-left-color: var(--accent-green);
+    border-left-color: var(--accent-teal);
 }
 
 .metric-card.processes-calibrated {
@@ -403,44 +355,38 @@ body {
 }
 
 .metric-label {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
+    font-weight: 600;
 }
 
 .metric-val {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #fff;
-    margin-top: 0.5rem;
-    font-family: var(--font-sans);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+    margin-top: 0.4rem;
 }
 
 .metric-card.alert-active .metric-val {
     color: var(--accent-red);
-    text-shadow: var(--hud-glow-red);
+    text-shadow: var(--glow-red);
 }
 
 .metric-card.events-processed .metric-val {
-    color: var(--accent-green);
-    text-shadow: var(--hud-glow-green);
-}
-
-.metric-card.processes-calibrated .metric-val {
-    color: var(--accent-orange);
-    text-shadow: 0 0 10px rgba(255, 157, 0, 0.3);
+    color: var(--accent-teal);
+    text-shadow: 0 0 15px rgba(0, 230, 118, 0.15);
 }
 
 .metric-desc {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
     margin-top: 0.35rem;
     font-family: var(--font-mono);
 }
 
-/* Layout adjustments */
+/* Table Card Split layout definitions */
 .table-card-col {
     flex-grow: 2;
 }
@@ -449,42 +395,40 @@ body {
     flex-grow: 1;
 }
 
-/* Hacker Terminal-Style Event Stream */
+/* Real-Time Event Stream Log feed styling */
 .event-stream-container {
     max-height: 380px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding-right: 0.25rem;
+    gap: 0.65rem;
 }
 
 .event-stream-item {
-    background: rgba(2, 3, 6, 0.9);
-    border: 1px solid rgba(16, 33, 53, 0.8);
-    border-left: 2px solid var(--accent-cyan);
-    padding: 0.85rem 1rem;
+    background: rgba(17, 26, 46, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.9rem 1.15rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: var(--transition-smooth);
-    font-family: var(--font-mono);
 }
 
 .event-stream-item:hover {
-    border-color: var(--accent-cyan);
-    background: rgba(0, 240, 255, 0.02);
+    border-color: var(--accent-blue);
+    background: rgba(17, 26, 46, 0.7);
 }
 
 .event-stream-info {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.25rem;
 }
 
 .event-file-path {
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.88rem;
+    font-weight: 600;
     color: #fff;
     max-width: 250px;
     overflow: hidden;
@@ -493,80 +437,72 @@ body {
 }
 
 .event-proc-name {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
+    font-family: var(--font-mono);
 }
 
 .event-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 0.2rem;
+    gap: 0.25rem;
 }
 
 .event-time {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
 }
 
 .event-entropy {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    padding: 0.15rem 0.4rem;
-    border-radius: 2px;
-}
-
-.entropy-high {
-    background-color: rgba(255, 0, 60, 0.15);
-    color: var(--accent-red);
-    border: 1px solid rgba(255, 0, 60, 0.3);
-}
-
-.entropy-low {
-    background-color: rgba(57, 255, 20, 0.1);
-    color: var(--accent-green);
-    border: 1px solid rgba(57, 255, 20, 0.2);
-}
-
-/* Security Alert Items (Critical Containment Event Cards) */
-.alert-item {
-    background: rgba(255, 0, 60, 0.03);
-    border: 1px solid rgba(255, 0, 60, 0.4);
-    border-left: 4px solid var(--accent-red);
-    padding: 1.2rem;
-    margin-bottom: 1rem;
-    position: relative;
-    box-shadow: 0 0 15px rgba(255, 0, 60, 0.05);
-}
-
-.alert-item::after {
-    content: "THREAT BREACHED";
-    position: absolute;
-    top: 5px; right: 10px;
-    font-size: 0.6rem;
-    color: var(--accent-red);
-    letter-spacing: 2px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
     font-family: var(--font-mono);
 }
 
-.alert-header {
+.entropy-high {
+    background-color: rgba(255, 23, 68, 0.1);
+    color: var(--accent-red);
+    border: 1px solid rgba(255, 23, 68, 0.25);
+}
+
+.entropy-low {
+    background-color: rgba(0, 230, 118, 0.08);
+    color: var(--accent-teal);
+    border: 1px solid rgba(0, 230, 118, 0.2);
+}
+
+/* Security Containment alerts cards */
+.alert-item {
+    background: rgba(255, 23, 68, 0.03);
+    border: 1px solid rgba(255, 23, 68, 0.2);
+    border-left: 4px solid var(--accent-red);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
     margin-bottom: 0.85rem;
+    box-shadow: 0 4px 15px rgba(255, 23, 68, 0.05);
+}
+
+.alert-header {
+    margin-bottom: 0.75rem;
 }
 
 .alert-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--accent-red);
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
 .alert-body {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.4rem;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.78rem;
 }
 
 .alert-body-row {
@@ -583,10 +519,9 @@ body {
     text-align: right;
 }
 
-/* Cybersecurity Dashboard Grid-Table Layout */
+/* Enterprise Data Tables styling */
 .table-wrapper {
     overflow-x: auto;
-    margin-top: 0.5rem;
 }
 
 .telemetry-table {
@@ -596,163 +531,154 @@ body {
 }
 
 .telemetry-table th {
-    background-color: rgba(10, 14, 26, 0.95);
-    color: var(--accent-cyan);
-    border-bottom: 2px solid var(--border-color);
-    padding: 1rem 1.25rem;
+    background-color: rgba(17, 26, 46, 0.3);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.85rem 1.15rem;
     font-weight: 600;
-    font-size: 0.85rem;
-    letter-spacing: 1.5px;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    font-family: var(--font-sans);
 }
 
 .telemetry-table tr {
-    border-bottom: 1px solid rgba(16, 33, 53, 0.5);
+    border-bottom: 1px solid rgba(27, 42, 71, 0.5);
     transition: var(--transition-smooth);
 }
 
 .telemetry-table tr:hover {
-    background-color: rgba(0, 240, 255, 0.02);
+    background-color: rgba(27, 42, 71, 0.25);
 }
 
 .telemetry-table td {
-    padding: 0.9rem 1.25rem;
-    font-size: 0.85rem;
+    padding: 0.9rem 1.15rem;
+    font-size: 0.88rem;
     color: var(--text-primary);
-    font-family: var(--font-mono);
     vertical-align: middle;
 }
 
-/* Badges for containment classifications */
+/* Adaptive Threat Status Badges */
 .badge {
     display: inline-block;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.7rem;
-    font-weight: bold;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    border-radius: 2px;
+    letter-spacing: 1px;
+    border-radius: 4px;
     font-family: var(--font-mono);
 }
 
 .badge-monitor {
-    background-color: rgba(0, 240, 255, 0.1);
-    color: var(--accent-cyan);
-    border: 1px solid rgba(0, 240, 255, 0.3);
+    background-color: rgba(0, 210, 255, 0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(0, 210, 255, 0.25);
 }
 
 .badge-terminated {
-    background-color: rgba(255, 0, 60, 0.15);
+    background-color: rgba(255, 23, 68, 0.12);
     color: var(--accent-red);
-    border: 1px solid rgba(255, 0, 60, 0.4);
-    box-shadow: 0 0 5px rgba(255, 0, 60, 0.2);
+    border: 1px solid rgba(255, 23, 68, 0.3);
 }
 
 .badge-suspended {
-    background-color: rgba(255, 157, 0, 0.15);
+    background-color: rgba(255, 145, 0, 0.12);
     color: var(--accent-orange);
-    border: 1px solid rgba(255, 157, 0, 0.4);
+    border: 1px solid rgba(255, 145, 0, 0.3);
 }
 
 .badge-calibration {
-    background-color: rgba(245, 241, 0, 0.1);
+    background-color: rgba(255, 214, 0, 0.08);
     color: var(--accent-yellow);
-    border: 1px solid rgba(245, 241, 0, 0.3);
+    border: 1px solid rgba(255, 214, 0, 0.2);
 }
 
 .badge-success {
-    background-color: rgba(57, 255, 20, 0.1);
-    color: var(--accent-green);
-    border: 1px solid rgba(57, 255, 20, 0.3);
+    background-color: rgba(0, 230, 118, 0.08);
+    color: var(--accent-teal);
+    border: 1px solid rgba(0, 230, 118, 0.2);
 }
 
 .badge-warning {
-    background-color: rgba(255, 157, 0, 0.1);
+    background-color: rgba(255, 145, 0, 0.08);
     color: var(--accent-orange);
-    border: 1px solid rgba(255, 157, 0, 0.3);
+    border: 1px solid rgba(255, 145, 0, 0.2);
 }
 
 .badge-danger {
-    background-color: rgba(255, 0, 60, 0.1);
+    background-color: rgba(255, 23, 68, 0.08);
     color: var(--accent-red);
-    border: 1px solid rgba(255, 0, 60, 0.3);
+    border: 1px solid rgba(255, 23, 68, 0.2);
 }
 
-/* Classic Cyberpunk Command Buttons */
+/* Premium Rounded Action Buttons with soft transitions */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-sans);
     font-size: 0.85rem;
-    font-weight: bold;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 0.65rem 1.25rem;
-    border-radius: 0;
+    letter-spacing: 1.5px;
+    padding: 0.65rem 1.35rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
     cursor: pointer;
     transition: var(--transition-smooth);
-    position: relative;
-    overflow: hidden;
+    user-select: none;
 }
 
 .btn-primary {
-    background-color: rgba(57, 255, 20, 0.05);
-    color: var(--accent-green);
-    border: 1px solid var(--accent-green);
-    box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);
+    background-color: var(--accent-teal);
+    color: #050911;
 }
 
 .btn-primary:hover {
-    background-color: var(--accent-green);
-    color: #000;
-    box-shadow: var(--hud-glow-green);
-    font-weight: 700;
+    background-color: #00ff80;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
 }
 
 .btn-secondary {
-    background-color: rgba(0, 240, 255, 0.05);
-    color: var(--accent-cyan);
-    border: 1px solid var(--accent-cyan);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+    background-color: transparent;
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
 }
 
 .btn-secondary:hover {
-    background-color: var(--accent-cyan);
-    color: #000;
-    box-shadow: var(--hud-glow-cyan);
-    font-weight: 700;
+    background-color: var(--accent-blue);
+    color: #050911;
+    box-shadow: var(--glow-cyan);
 }
 
 .btn-accent {
-    background-color: rgba(189, 0, 255, 0.05);
+    background-color: rgba(213, 0, 249, 0.1);
     color: var(--accent-purple);
-    border: 1px solid var(--accent-purple);
+    border-color: rgba(213, 0, 249, 0.25);
 }
 
 .btn-accent:hover {
     background-color: var(--accent-purple);
     color: #fff;
-    box-shadow: 0 0 15px rgba(189, 0, 255, 0.4);
+    box-shadow: 0 0 15px rgba(213, 0, 249, 0.35);
 }
 
 .btn-danger {
-    background-color: rgba(255, 0, 60, 0.05);
+    background-color: transparent;
     color: var(--accent-red);
-    border: 1px solid var(--accent-red);
+    border-color: var(--accent-red);
 }
 
 .btn-danger:hover {
     background-color: var(--accent-red);
     color: #fff;
-    box-shadow: var(--hud-glow-red);
+    box-shadow: var(--glow-red);
 }
 
 .btn-large {
-    padding: 0.9rem 1.8rem;
-    font-size: 1rem;
-    letter-spacing: 3px;
+    padding: 0.85rem 1.75rem;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
 }
 
 .btn-small {
@@ -761,7 +687,7 @@ body {
     letter-spacing: 1px;
 }
 
-/* Command Center Settings forms */
+/* Settings Forms & Inputs */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -769,38 +695,36 @@ body {
 .form-group label {
     display: block;
     font-size: 0.85rem;
-    color: var(--accent-cyan);
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    font-weight: 500;
 }
 
 .form-control {
     width: 100%;
-    background-color: #020306;
+    background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     color: #fff;
     padding: 0.75rem 1rem;
     font-family: var(--font-mono);
     font-size: 0.85rem;
-    border-radius: 0;
+    border-radius: 6px;
     transition: var(--transition-smooth);
 }
 
 .form-control:focus {
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+    border-color: var(--accent-blue);
     outline: none;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.15);
 }
 
 .help-text {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
     margin-top: 0.4rem;
-    font-family: var(--font-mono);
 }
 
-/* Radio Cards (Containment strategies options) */
+/* Admin Strategy Radio Card options */
 .radio-selectors {
     display: flex;
     flex-direction: column;
@@ -808,8 +732,9 @@ body {
 }
 
 .radio-card {
-    background: rgba(2, 3, 6, 0.8);
+    background: rgba(17, 26, 46, 0.3);
     border: 1px solid var(--border-color);
+    border-radius: 8px;
     padding: 1.1rem;
     display: flex;
     gap: 1rem;
@@ -822,13 +747,13 @@ body {
 }
 
 .radio-card:hover {
-    border-color: var(--accent-cyan);
+    border-color: var(--accent-blue);
+    background: rgba(17, 26, 46, 0.5);
 }
 
 .radio-card.selected {
-    border-color: var(--accent-green);
-    background: rgba(57, 255, 20, 0.02);
-    box-shadow: inset 0 0 10px rgba(57, 255, 20, 0.05);
+    border-color: var(--accent-teal);
+    background: rgba(0, 230, 118, 0.02);
 }
 
 .radio-content {
@@ -837,220 +762,210 @@ body {
 }
 
 .radio-title {
-    font-size: 0.9rem;
-    font-weight: bold;
+    font-size: 0.92rem;
+    font-weight: 600;
     color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .radio-card.selected .radio-title {
-    color: var(--accent-green);
+    color: var(--accent-teal);
 }
 
 .radio-desc {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
     margin-top: 0.25rem;
-    font-family: var(--font-mono);
 }
 
-/* Modern slider controls */
+/* Linear & range controls */
 .input-slider-group {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .input-slider-group input[type="range"] {
     flex-grow: 1;
-    height: 4px;
+    height: 6px;
     background: var(--border-color);
+    border-radius: 3px;
     outline: none;
-}
-
-.input-slider-group input[type="range"]::-webkit-slider-thumb {
-    width: 14px;
-    height: 14px;
-    background: var(--accent-cyan);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: var(--hud-glow-cyan);
+    accent-color: var(--accent-blue);
 }
 
 .width-small {
-    width: 100px;
+    width: 90px;
 }
 
 .unit {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
+    font-weight: 500;
 }
 
-/* Behavioral weights slider parameters grids */
+/* Parameters Weights Grids */
 .weights-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .weight-control-card {
-    background-color: rgba(2, 3, 6, 0.8);
+    background-color: rgba(17, 26, 46, 0.3);
     border: 1px solid var(--border-color);
-    padding: 1rem;
+    border-radius: 8px;
+    padding: 1.1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.65rem;
 }
 
 .weight-title {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-family: var(--font-sans);
 }
 
 .weight-slider-container {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 .weight-slider-container input[type="range"] {
     flex-grow: 1;
-    height: 4px;
-    background: var(--border-color);
-    outline: none;
+    height: 5px;
+    accent-color: var(--accent-teal);
 }
 
 .weight-value {
-    width: 50px;
+    width: 45px;
     text-align: right;
     font-size: 0.85rem;
-    color: var(--accent-green);
+    color: var(--accent-teal);
     font-family: var(--font-mono);
     font-weight: bold;
 }
 
-/* Core Alerts layout definitions */
+/* Alerts banners layout classes */
 .alert {
-    padding: 1rem 1.5rem;
+    padding: 1.1rem 1.5rem;
     border-left: 4px solid #fff;
+    border-radius: 8px;
     margin-bottom: 1.5rem;
-    font-family: var(--font-mono);
 }
 
 .alert-success {
-    background-color: rgba(57, 255, 20, 0.05);
-    border-color: var(--accent-green);
+    background-color: rgba(0, 230, 118, 0.05);
+    border-color: var(--accent-teal);
     color: #fff;
 }
 
 .alert-success h4 {
-    color: var(--accent-green);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    color: var(--accent-teal);
+    font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .alert-danger {
-    background-color: rgba(255, 0, 60, 0.05);
+    background-color: rgba(255, 23, 68, 0.05);
     border-color: var(--accent-red);
     color: #fff;
 }
 
 .alert-danger h4 {
     color: var(--accent-red);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .alert-warning {
-    background-color: rgba(255, 157, 0, 0.05);
+    background-color: rgba(255, 145, 0, 0.05);
     border-color: var(--accent-orange);
     color: #fff;
 }
 
 .alert-warning h4 {
     color: var(--accent-orange);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
-/* Calibration Radial and Linear Progress gauges */
+/* Calibrator baseline circular indicator layout */
 .progress-radial-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 2.5rem 0;
+    margin: 2rem 0;
 }
 
 .progress-radial-ring {
-    width: 180px;
-    height: 180px;
+    width: 170px;
+    height: 170px;
     border-radius: 50%;
     border: 4px solid var(--border-color);
-    border-top-color: var(--accent-cyan);
-    border-right-color: var(--accent-cyan);
+    border-top-color: var(--accent-blue);
+    border-right-color: var(--accent-blue);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    animation: rotate-profile 4s linear infinite;
+    animation: rotate-cal 3s linear infinite;
 }
 
 .progress-text-display {
     text-align: center;
     position: absolute;
-    animation: counter-rotate-profile 4s linear infinite;
+    animation: counter-rotate-cal 3s linear infinite;
 }
 
 .progress-text-display span {
-    font-size: 2rem;
-    color: var(--accent-cyan);
-    text-shadow: var(--hud-glow-cyan);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--accent-blue);
 }
 
 .progress-text-display p {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     margin-top: 0.25rem;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     text-transform: uppercase;
+    color: var(--text-secondary);
 }
 
 .progress-bar-linear {
     width: 100%;
     height: 6px;
-    background-color: rgba(16, 33, 53, 0.8);
+    background-color: var(--border-color);
+    border-radius: 3px;
     position: relative;
     overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background-color: var(--accent-cyan);
-    box-shadow: var(--hud-glow-cyan);
-    transition: width 0.4s ease;
+    background-color: var(--accent-blue);
+    box-shadow: var(--glow-cyan);
+    transition: width 0.3s ease;
 }
 
 .progress-bar-fill.pulse {
     animation: bar-pulse 1s infinite alternate;
 }
 
-/* Modals layout structures */
+/* Dialog Modal Overlay styles */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    background-color: rgba(2, 3, 6, 0.95);
-    backdrop-filter: blur(4px);
+    background-color: rgba(2, 4, 8, 0.85);
+    backdrop-filter: blur(6px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    transition: var(--transition-smooth);
 }
 
 .modal-overlay.hidden {
@@ -1058,24 +973,12 @@ body {
 }
 
 .modal-card {
-    width: 700px;
+    width: 650px;
     background-color: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-top: 4px solid var(--accent-cyan);
-    padding: 1.5rem;
-    position: relative;
-}
-
-.modal-card::before {
-    content: "RESTRICTED THREAT CORRELATOR";
-    position: absolute;
-    top: -12px;
-    left: 20px;
-    font-size: 0.65rem;
-    background: var(--bg-primary);
-    padding: 0 10px;
-    color: var(--accent-cyan);
-    letter-spacing: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
 }
 
 .modal-header {
@@ -1083,15 +986,14 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.8rem;
+    padding-bottom: 1rem;
     margin-bottom: 1.5rem;
 }
 
 .modal-header h3 {
-    font-size: 1.1rem;
-    color: var(--accent-cyan);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    font-size: 1.15rem;
+    color: #fff;
+    font-weight: 600;
 }
 
 .modal-close-btn {
@@ -1107,7 +1009,7 @@ body {
     color: var(--accent-red);
 }
 
-/* VirusTotal Intelligence results classes */
+/* VirusTotal Intelligence Report UI elements */
 .vt-results-header {
     display: flex;
     gap: 1.5rem;
@@ -1116,20 +1018,21 @@ body {
 }
 
 .vt-score-gauge {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
     border: 3px solid var(--accent-red);
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: rgba(255, 0, 60, 0.05);
+    background-color: rgba(255, 23, 68, 0.05);
 }
 
 .vt-score-gauge .gauge-score {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--accent-red);
 }
 
 .vt-score-gauge .gauge-label {
@@ -1137,104 +1040,45 @@ body {
     color: var(--text-secondary);
     text-transform: uppercase;
     text-align: center;
+    font-weight: 600;
 }
 
 .vt-meta h4 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #fff;
+    font-weight: 600;
     margin-bottom: 0.25rem;
-    text-transform: uppercase;
 }
 
 .vt-detections {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.65rem;
+    gap: 0.6rem;
     max-height: 250px;
     overflow-y: auto;
 }
 
 .vt-engine-card {
-    background-color: rgba(2, 3, 6, 0.6);
+    background-color: rgba(17, 26, 46, 0.3);
     border: 1px solid var(--border-color);
+    border-radius: 6px;
     padding: 0.65rem 1rem;
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
 }
 
 .vt-engine-card.danger {
-    border-left: 2px solid var(--accent-red);
+    border-left: 3px solid var(--accent-red);
 }
 
 .vt-engine-card span {
     color: var(--accent-red);
-    font-weight: bold;
+    font-weight: 600;
+    font-family: var(--font-mono);
 }
 
-/* Math Equations styling */
-.latex-math-center {
-    font-size: 1.3rem;
-    color: var(--accent-cyan);
-    padding: 1rem;
-    text-align: center;
-}
-
-/* Animations declarations */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.5);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(57, 255, 20, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(57, 255, 20, 0);
-    }
-}
-
-@keyframes breach-pulse {
-    0% {
-        border-color: rgba(255, 0, 60, 0.4);
-    }
-    50% {
-        border-color: var(--accent-red);
-        box-shadow: 0 0 15px rgba(255, 0, 60, 0.2);
-    }
-    100% {
-        border-color: rgba(255, 0, 60, 0.4);
-    }
-}
-
-@keyframes rotate-profile {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes counter-rotate-profile {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(-360deg);
-    }
-}
-
-@keyframes bar-pulse {
-    0% {
-        opacity: 0.7;
-    }
-    100% {
-        opacity: 1;
-        box-shadow: 0 0 15px var(--accent-cyan);
-    }
-}
-
-/* Standard utilities classes */
+/* General Layout utilities */
 .hidden {
     display: none !important;
 }
@@ -1248,15 +1092,15 @@ body {
 }
 
 .text-small {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
 }
 
 .text-xs {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
 }
 
 .text-teal {
-    color: var(--accent-cyan);
+    color: var(--accent-teal);
 }
 
 .text-danger {
@@ -1268,7 +1112,7 @@ body {
 }
 
 .font-bold {
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .font-mono {
@@ -1293,10 +1137,6 @@ body {
 
 .margin-bottom-md {
     margin-bottom: 1rem;
-}
-
-.padding-top-md {
-    padding-top: 1rem;
 }
 
 .py-sm {
@@ -1325,11 +1165,6 @@ body {
     gap: 0.5rem;
 }
 
-.flex-column {
-    display: flex;
-    flex-direction: column;
-}
-
 .justify-between {
     justify-content: space-between;
 }
@@ -1339,7 +1174,7 @@ body {
 }
 
 .list-styled {
-    padding-left: 1.2rem;
+    padding-left: 1.25rem;
 }
 
 .list-styled li {
@@ -1350,4 +1185,45 @@ body {
     height: 200px;
     position: relative;
     margin-top: 0.5rem;
+}
+
+/* Keyframe Animations */
+@keyframes active-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(0, 230, 118, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+    }
+}
+
+@keyframes rotate-cal {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes counter-rotate-cal {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes bar-pulse {
+    0% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+    }
 }

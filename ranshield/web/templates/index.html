@@ -14,6 +14,8 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- ChartJS via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MathJax for math equations parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- Tailwind Configuration for Cyberpunk Enterprise Aesthetics -->
     <script>
         tailwind.config = {
@@ -44,7 +46,7 @@
         }
     </script>
     <style>
-        /* Premium custom scrollbars */
+        /* Custom scrollbars */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -64,11 +66,13 @@
 <body class="bg-cyber-dark text-slate-100 font-sans min-h-screen selection:bg-cyber-blue selection:text-cyber-black">
     <div id="root"></div>
 
+    <!-- Wrapped completely in Jinja2 {% raw %} block to bypass curly braces parsing conflicts -->
+    {% raw %}
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            // State management
+            // App state hooks
             const [activeTab, setActiveTab] = useState('telemetry');
             const [stats, setStats] = useState({
                 total_events: 0,
@@ -88,7 +92,7 @@
                 profiled_processes: []
             });
 
-            // Policy tab inputs state
+            // Rules form configurations state
             const [policies, setPolicies] = useState({
                 containment_mode: 'MONITOR_ONLY',
                 entropy_threshold_default: 6.5,
@@ -103,18 +107,18 @@
                 }
             });
 
-            // UI helper states
+            // Helper notification alerts
             const [alertMessage, setAlertMessage] = useState(null);
             const [selectedVT, setSelectedVT] = useState(null);
             const [restoredAlert, setRestoredAlert] = useState(null);
 
-            // Chart references
+            // Chart canvases references
             const entropyChartRef = useRef(null);
             const ioChartRef = useRef(null);
             const entropyCanvasRef = useRef(null);
             const ioCanvasRef = useRef(null);
 
-            // Fetch high level telemetry states
+            // Real-time API telemetry fetch logic
             const fetchDashboardData = () => {
                 fetch('/api/stats')
                     .then(res => res.json())
@@ -145,7 +149,6 @@
                     .catch(err => console.error('Alerts fetch error:', err));
             };
 
-            // Fetch other tab-specific states
             const fetchPolicies = () => {
                 fetch('/api/policies')
                     .then(res => res.json())
@@ -181,7 +184,7 @@
                     .catch(err => console.error('Calibrator fetch error:', err));
             };
 
-            // Setup polling loops
+            // Unified polling loop triggers
             useEffect(() => {
                 fetchDashboardData();
                 fetchVault();
@@ -201,17 +204,22 @@
                 fetchPolicies();
             }, []);
 
-            // Handle rendering entropy and IO bandwidth live line charts
+            // MathJax reprocessing handler on view tabs switch
+            useEffect(() => {
+                if (window.MathJax) {
+                    window.MathJax.typesetPromise();
+                }
+            }, [activeTab]);
+
+            // Re-render ChartJS lines when telemetry streams updates
             useEffect(() => {
                 if (activeTab !== 'telemetry' || events.length === 0) return;
 
-                // Prepare charts datasets
                 const lastEvents = [...events].reverse();
                 const labels = lastEvents.map(e => new Date(e.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
                 const entropies = lastEvents.map(e => e.entropy_after);
-                const speeds = lastEvents.map(e => e.scoring);
 
-                // 1. Entropy Chart setup
+                // 1. Render Entropy Chart
                 if (entropyCanvasRef.current) {
                     if (entropyChartRef.current) {
                         entropyChartRef.current.destroy();
@@ -222,14 +230,14 @@
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: 'Shannon Entropy Level',
+                                label: 'Shannon Entropy',
                                 data: entropies,
                                 borderColor: '#00d2ff',
                                 backgroundColor: 'rgba(0, 210, 255, 0.05)',
                                 borderWidth: 2,
                                 fill: true,
                                 tension: 0.3,
-                                pointRadius: 2
+                                pointRadius: 1
                             }]
                         },
                         options: {
@@ -244,14 +252,13 @@
                     });
                 }
 
-                // 2. Write Bandwidth Chart setup
+                // 2. Render Process Writes Chart
                 if (ioCanvasRef.current) {
                     if (ioChartRef.current) {
                         ioChartRef.current.destroy();
                     }
                     const ctx = ioCanvasRef.current.getContext('2d');
                     
-                    // Aggregate IO by process
                     const processGroups = {};
                     lastEvents.forEach(e => {
                         const proc = e.source_exe || 'SYSTEM';
@@ -296,7 +303,7 @@
                 }
             }, [activeTab, events]);
 
-            // Save Policies Handler
+            // Save Policy Form Handler
             const savePolicies = (e) => {
                 e.preventDefault();
                 fetch('/api/policies', {
@@ -313,12 +320,12 @@
                         setAlertMessage({ type: 'danger', text: data.error });
                     }
                 })
-                .catch(err => setAlertMessage({ type: 'danger', text: 'Connection failed: ' + err }));
+                .catch(err => setAlertMessage({ type: 'danger', text: 'Deployment connection failed: ' + err }));
             };
 
-            // Reset Database Handler
+            // Reset Database Logs Handler
             const handleReset = () => {
-                if (confirm('Are you sure you want to flush all process metrics and historical telemetry?')) {
+                if (confirm('Flush current database? This clears all telemetry metrics, file event charts, and historical threat logs.')) {
                     fetch('/api/reset', { method: 'POST' })
                         .then(res => res.json())
                         .then(data => {
@@ -330,7 +337,7 @@
                 }
             };
 
-            // Release File from Quarantine
+            // Quarantine Release Handler
             const handleRelease = (qid) => {
                 fetch('/api/vault/release', {
                     method: 'POST',
@@ -344,12 +351,12 @@
                         fetchVault();
                         fetchDashboardData();
                     } else {
-                        alert('Release failed: ' + data.error);
+                        alert('Quarantine release error: ' + data.error);
                     }
                 });
             };
 
-            // Submit Quarantined File to VirusTotal Intelligence
+            // VirusTotal Signatures Lookup Handler
             const handleVirusTotal = (qid) => {
                 fetch('/api/vault/virustotal', {
                     method: 'POST',
@@ -362,14 +369,14 @@
                         setSelectedVT(data);
                         fetchVault();
                     } else {
-                        alert('VirusTotal lookup failed: ' + data.error);
+                        alert('VirusTotal lookup error: ' + data.error);
                     }
                 });
             };
 
-            // Trigger Baseline Recalibration
+            // Start Baselines Profiling Calibrator
             const handleRecalibrate = () => {
-                if (confirm('Initiate dynamic baselining? This wipes existing bounds and profiles live application activity for 60 seconds.')) {
+                if (confirm('Launch adaptive calibration? This resets all class boundaries and models live endpoint activities.')) {
                     fetch('/api/calibrator/recalibrate', { method: 'POST' })
                         .then(res => res.json())
                         .then(data => {
@@ -379,26 +386,26 @@
                 }
             };
 
-            // Recover Snapshot Backup folder
+            // Trigger Shadow Backup Restoration
             const triggerRecovery = () => {
                 fetch('/api/dfir/restore', { method: 'POST' })
                     .then(res => res.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            setRestoredAlert({ title: 'Self-Healing Backup Restored', text: data.message });
+                            setRestoredAlert({ title: 'Autonomous Restoration Concluded', text: data.message });
                         } else {
-                            setRestoredAlert({ title: 'Recovery Blocked', text: 'Error executing snapshot extraction: ' + data.message });
+                            setRestoredAlert({ title: 'Restoration Failed', text: 'Error extracting backup journals: ' + data.message });
                         }
                     });
             };
 
             return (
                 <div className="flex min-h-screen">
-                    {/* Left Navigation Sidebar */}
+                    {/* Left Sidebar HUD Navigation */}
                     <nav className="w-72 bg-cyber-slate border-r border-cyber-border p-8 flex flex-col justify-between fixed h-screen z-50">
                         <div>
                             <div className="relative pb-6 mb-8 border-b border-cyber-border border-dashed">
-                                <div className="absolute -top-8 -left-8 w-36 h-36 bg-radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, rgba(0,0,0,0) 70%) pointer-events-none"></div>
+                                <div className="absolute -top-8 -left-8 w-36 h-36 bg-[radial-gradient(circle,rgba(0,210,255,0.08)_0%,rgba(0,0,0,0)_70%)] pointer-events-none"></div>
                                 <h2 className="text-2xl font-bold tracking-wider text-white">RAN<span>SHIELD</span></h2>
                                 <p className="text-xs text-cyber-teal font-semibold uppercase tracking-[0.2em] mt-1">Endpoint Protection</p>
                             </div>
@@ -448,9 +455,9 @@
                         </div>
                     </nav>
 
-                    {/* Right Workspace Main Content */}
+                    {/* Right Workspace Main Viewport */}
                     <main className="flex-1 ml-72 p-10 flex flex-col h-screen overflow-hidden">
-                        {/* Header Panel */}
+                        {/* Dashboard Header */}
                         <header className="flex justify-between items-center mb-8 pb-5 border-b border-cyber-border">
                             <div>
                                 <h1 className="text-3xl font-bold text-white uppercase tracking-wider">
@@ -460,7 +467,7 @@
                                     {activeTab === 'vault' && 'Quarantine Threat Vault'}
                                     {activeTab === 'calibrator' && 'Dynamic Workload Profiler'}
                                 </h1>
-                                <p className="text-sm text-cyber-muted mt-1 uppercase tracking-wider font-medium">
+                                <p className="text-sm text-cyber-muted mt-1 uppercase tracking-wider font-medium font-mono">
                                     {activeTab === 'telemetry' && 'Real-time Shannon entropy vectors and telemetry bounds'}
                                     {activeTab === 'dfir' && 'Active system audit trail ledger and self-healing checkpoints'}
                                     {activeTab === 'policies' && 'Fine-tune scoring multipliers and system containment variables'}
@@ -469,52 +476,52 @@
                                 </p>
                             </div>
                             <div className="flex gap-4">
-                                <button onClick={handleReset} className="px-5 py-2.5 bg-transparent border border-cyber-border hover:border-cyber-red hover:text-cyber-red text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200">
+                                <button onClick={handleReset} className="px-5 py-2.5 bg-transparent border border-cyber-border hover:border-cyber-red hover:text-cyber-red text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200 font-mono">
                                     Purge Logs
                                 </button>
-                                <a href="/dfir/export" className="px-5 py-2.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10">
+                                <a href="/dfir/export" className="px-5 py-2.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10 font-mono">
                                     Export Ledger
                                 </a>
                             </div>
                         </header>
 
-                        {/* Outer Scroll Container */}
+                        {/* Middle Workspace Body Wrapper */}
                         <div className="flex-1 overflow-y-auto pr-1">
                             {/* TAB 1: TELEMETRY CONSOLE */}
                             {activeTab === 'telemetry' && (
                                 <div className="space-y-8 animate-fade-in">
-                                    {/* Stats grid */}
+                                    {/* Stats overview widgets */}
                                     <div className="grid grid-cols-4 gap-6">
                                         <div className="bg-cyber-slate border-l-4 border-cyber-blue border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
-                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Active Watchpoint Path</p>
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider font-mono">Active Watchpoint Path</p>
                                             <p className="text-sm font-semibold font-mono text-white mt-2 truncate max-w-xs">{stats.watch_dir}</p>
-                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Continuous watcher monitor</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold font-mono">Continuous watcher monitor</p>
                                         </div>
                                         <div className="bg-cyber-slate border-l-4 border-cyber-teal border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
-                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Audited File Activities</p>
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider font-mono">Audited File Activities</p>
                                             <p className="text-3xl font-bold text-white mt-2 font-mono">{stats.total_events}</p>
-                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Heuristics processed</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold font-mono">Heuristics processed</p>
                                         </div>
                                         <div className="bg-cyber-slate border-l-4 border-cyber-orange border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
-                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Monitored Process IDs</p>
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider font-mono">Monitored Process IDs</p>
                                             <p className="text-3xl font-bold text-white mt-2 font-mono">{stats.monitored_pids}</p>
-                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Tracked system nodes</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold font-mono">Tracked system nodes</p>
                                         </div>
                                         <div className={`bg-cyber-slate border border-cyber-border border-l-4 ${stats.active_threats > 0 ? 'border-cyber-red animate-pulse' : 'border-cyber-red'} p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5`}>
-                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Contained Detections</p>
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider font-mono">Contained Detections</p>
                                             <p className={`text-3xl font-bold mt-2 font-mono ${stats.active_threats > 0 ? 'text-cyber-red' : 'text-white'}`}>{stats.active_threats}</p>
-                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Blocked malware attempts</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold font-mono">Blocked malware attempts</p>
                                         </div>
                                     </div>
 
-                                    {/* Charts and Feeds Column Layout */}
+                                    {/* Real-time analytics charts and stream feed */}
                                     <div className="grid grid-cols-3 gap-6">
-                                        {/* Left Side Analytical Charts */}
+                                        {/* Charts list block */}
                                         <div className="col-span-2 space-y-6">
                                             <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                                 <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                     <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
-                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-blue">Active Filesystem Shannon Entropy</h3>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-blue font-mono">Active Filesystem Shannon Entropy</h3>
                                                 </div>
                                                 <div className="h-56 relative">
                                                     <canvas ref={entropyCanvasRef}></canvas>
@@ -524,7 +531,7 @@
                                             <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                                 <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                     <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
-                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-teal">Process Disk Write Bandwidth (MB/s)</h3>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-teal font-mono">Process Disk Write Bandwidth (MB/s)</h3>
                                                 </div>
                                                 <div className="h-56 relative">
                                                     <canvas ref={ioCanvasRef}></canvas>
@@ -532,17 +539,17 @@
                                             </div>
                                         </div>
 
-                                        {/* Right Side Logs Feed */}
+                                        {/* Real-time events sidebar */}
                                         <div className="space-y-6">
-                                            {/* Critical Alerts Card */}
+                                            {/* Security alerts alerts log */}
                                             <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col h-72">
                                                 <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                     <span className="w-1 h-4 bg-cyber-red rounded mr-3"></span>
-                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-red">Real-Time Threat Alerts</h3>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-red font-mono">Real-Time Threat Alerts</h3>
                                                 </div>
                                                 <div className="flex-1 overflow-y-auto space-y-4">
                                                     {alerts.length === 0 ? (
-                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase tracking-wider font-medium">No live containment actions initiated.</div>
+                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase tracking-wider font-medium font-mono">No live containment actions initiated.</div>
                                                     ) : (
                                                         alerts.map((al, idx) => (
                                                             <div key={idx} className="bg-cyber-red/5 border border-cyber-red/20 border-l-4 border-l-cyber-red p-3 rounded-lg text-xs font-mono space-y-1">
@@ -561,23 +568,23 @@
                                                 </div>
                                             </div>
 
-                                            {/* Live Activity Stream */}
+                                            {/* Live updates stream */}
                                             <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col h-72">
                                                 <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                     <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
-                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-white">Live Event Stream</h3>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Live Event Stream</h3>
                                                 </div>
                                                 <div className="flex-1 overflow-y-auto space-y-2">
                                                     {events.length === 0 ? (
-                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase font-semibold">Awaiting folder write samples...</div>
+                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase font-semibold font-mono">Awaiting folder write samples...</div>
                                                     ) : (
                                                         events.slice(0, 15).map((ev, idx) => (
-                                                            <div key={idx} className="bg-cyber-tertiary/30 border border-cyber-border/40 hover:border-cyber-blue/30 p-3 rounded-lg flex justify-between items-center text-xs transition duration-150">
+                                                            <div key={idx} className="bg-cyber-tertiary/30 border border-cyber-border/40 hover:border-cyber-blue/30 p-3 rounded-lg flex justify-between items-center text-xs transition duration-150 font-mono">
                                                                 <div className="flex flex-col gap-1">
                                                                     <span className="font-semibold text-white truncate max-w-[150px]">{ev.target_path.split('\\').pop()}</span>
-                                                                    <span className="text-[10px] text-cyber-muted font-mono">{ev.source_exe}</span>
+                                                                    <span className="text-[10px] text-cyber-muted">{ev.source_exe}</span>
                                                                 </div>
-                                                                <div className="flex flex-col items-end gap-1 font-mono">
+                                                                <div className="flex flex-col items-end gap-1">
                                                                     <span className="text-[10px] text-cyber-muted">{new Date(ev.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                                                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${ev.entropy_after > 6.0 ? 'bg-cyber-red/10 text-cyber-red border border-cyber-red/25' : 'bg-cyber-teal/10 text-cyber-teal border border-cyber-teal/20'}`}>H: {parseFloat(ev.entropy_after).toFixed(2)}</span>
                                                                 </div>
@@ -589,16 +596,16 @@
                                         </div>
                                     </div>
 
-                                    {/* Process Scoring Matrix */}
+                                    {/* Monitored endpoint matrices table */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                         <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
-                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Monitored Endpoint Process Threat Matrix</h3>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Monitored Endpoint Process Threat Matrix</h3>
                                         </div>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20 font-mono">
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">PID</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Executable Binary</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Location Path</th>
@@ -611,7 +618,7 @@
                                                 <tbody>
                                                     {timeline.length === 0 ? (
                                                         <tr>
-                                                            <td colSpan="7" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">No background workloads monitored yet.</td>
+                                                            <td colSpan="7" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider font-mono">No background workloads monitored yet.</td>
                                                         </tr>
                                                     ) : (
                                                         timeline.map((item, index) => {
@@ -649,55 +656,55 @@
                             {/* TAB 2: DFIR FORENSICS */}
                             {activeTab === 'dfir' && (
                                 <div className="space-y-8 animate-fade-in">
-                                    {/* Restoration Banner Alert */}
+                                    {/* Action restoration banner alerts */}
                                     {restoredAlert && (
                                         <div className="bg-cyber-teal/5 border border-cyber-teal/20 border-l-4 border-l-cyber-teal p-5 rounded-xl flex flex-col gap-1">
-                                            <h4 className="text-sm font-bold text-cyber-teal uppercase tracking-wider">{restoredAlert.title}</h4>
+                                            <h4 className="text-sm font-bold text-cyber-teal uppercase tracking-wider font-mono">{restoredAlert.title}</h4>
                                             <p className="text-xs text-white font-mono">{restoredAlert.text}</p>
                                         </div>
                                     )}
 
-                                    {/* Action ledger cards */}
+                                    {/* Recovery commands trigger layout */}
                                     <div className="grid grid-cols-2 gap-6">
-                                        {/* Action restoring triggers */}
+                                        {/* restoration trigger card */}
                                         <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                             <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
-                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Self-Healing Restoration Snapshots</h3>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Self-Healing Restoration Snapshots</h3>
                                             </div>
                                             <p className="text-xs text-cyber-muted leading-relaxed font-mono">
                                                 Whenever an untrusted PID initiates write requests matching heuristic threat benchmarks, RANSHIELD leverages background file-level shadow copies or temporary user cache backups to guarantee automated snapshot recovery.
                                             </p>
-                                            <button onClick={triggerRecovery} className="mt-6 w-full py-3 bg-gradient-to-r from-cyber-teal to-emerald-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-teal/5">
+                                            <button onClick={triggerRecovery} className="mt-6 w-full py-3 bg-gradient-to-r from-cyber-teal to-emerald-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-teal/5 font-mono">
                                                 Recover watch folder snapshots
                                             </button>
                                         </div>
 
-                                        {/* Math formula metrics */}
-                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                        {/* Restoration equations formula card */}
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col justify-between">
                                             <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
-                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Self-Healing Recovery Logic</h3>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Self-Healing Recovery Logic</h3>
                                             </div>
-                                            <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-sm">
+                                            <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-xs my-2">
                                                 $$\mathcal{D}_{restore} = \{ f \in \mathcal{W} \mid \delta(f) < T_{containment} \}$$
                                             </div>
-                                            <p className="text-xs text-cyber-muted leading-relaxed mt-4">
-                                                The self-healing protocol maintains localized transactional journal entries. In the event of a containment breach trigger, files configured inside the local sandbox are automatically restored from pre-encryption cached journals.
+                                            <p className="text-xs text-cyber-muted leading-relaxed font-mono mt-2">
+                                                The self-healing protocol maintains localized transactional journal entries. In the event of a containment breach trigger, files configured inside the local sandbox are restored from pre-encryption cached journals.
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Timeline events ledger */}
+                                    {/* History audit events lists */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                         <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
-                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Dynamic Forensic Security Ledger</h3>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Dynamic Forensic Security Ledger</h3>
                                         </div>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20 font-mono">
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Timestamp</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">PID</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Process Name</th>
@@ -712,7 +719,7 @@
                                                 <tbody>
                                                     {events.length === 0 ? (
                                                         <tr>
-                                                            <td colSpan="9" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">Awaiting background forensic events...</td>
+                                                            <td colSpan="9" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider font-mono">Awaiting background forensic events...</td>
                                                         </tr>
                                                     ) : (
                                                         events.map((ev, index) => (
@@ -742,28 +749,29 @@
 
                             {/* TAB 3: RULE POLICIES */}
                             {activeTab === 'policies' && (
-                                <form onSubmit={savePolicies} className="space-y-8 animate-fade-in">
+                                <form onSubmit={savePolicies} className="space-y-8 animate-fade-in font-mono">
                                     {alertMessage && (
                                         <div className={`border-l-4 p-5 rounded-xl flex flex-col gap-1 ${alertMessage.type === 'success' ? 'bg-cyber-teal/5 border-cyber-teal border border-cyber-teal/20 text-white' : 'bg-cyber-red/5 border-cyber-red border border-cyber-red/20 text-white'}`}>
                                             <h4 className="text-sm font-bold uppercase tracking-wider">{alertMessage.type === 'success' ? 'Configuration Saved' : 'Execution Error'}</h4>
-                                            <p className="text-xs font-mono">{alertMessage.text}</p>
+                                            <p className="text-xs">{alertMessage.text}</p>
                                         </div>
                                     )}
 
-                                    {/* Config variables controls */}
+                                    {/* Action enforcement thresholds controls layout */}
                                     <div className="grid grid-cols-2 gap-6">
+                                        {/* radio options card */}
                                         <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
                                             <div className="flex items-center pb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
                                                 <h3 className="font-bold uppercase tracking-wider text-sm text-white">Containment Enforcement Level</h3>
                                             </div>
 
-                                            <div className="space-y-4">
+                                            <div className="space-y-4 text-xs">
                                                 <label className="flex items-start gap-4 p-4 bg-cyber-tertiary/20 hover:bg-cyber-tertiary/30 border border-cyber-border/60 rounded-xl cursor-pointer transition">
                                                     <input type="radio" name="containment_mode" value="MONITOR_ONLY" checked={policies.containment_mode === 'MONITOR_ONLY'} onChange={(e) => setPolicies({...policies, containment_mode: e.target.value})} className="mt-1 accent-cyber-blue" />
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-bold uppercase tracking-wider text-white">Heuristic Monitoring Only</span>
-                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Monitors folder events, evaluates adaptive security scores, triggers dashboard indicators, and issues email warnings without terminating binaries.</span>
+                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Monitors folder events, evaluates adaptive security scores, triggers dashboard indicators, and issues alerts without terminating active threads.</span>
                                                     </div>
                                                 </label>
 
@@ -771,23 +779,24 @@
                                                     <input type="radio" name="containment_mode" value="ACTIVE_TERMINATE" checked={policies.containment_mode === 'ACTIVE_TERMINATE'} onChange={(e) => setPolicies({...policies, containment_mode: e.target.value})} className="mt-1 accent-cyber-red" />
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-bold uppercase tracking-wider text-cyber-red">Active Proactive Containment</span>
-                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Immediately halts, terminates, and quarantines malicious process binaries matching security scores to mitigate ongoing write actions.</span>
+                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Immediately halts, terminates, and quarantines malicious process binaries matching security scores to mitigate ongoing file encryption.</span>
                                                     </div>
                                                 </label>
                                             </div>
                                         </div>
 
+                                        {/* scope limits inputs card */}
                                         <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
                                             <div className="flex items-center pb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
                                                 <h3 className="font-bold uppercase tracking-wider text-sm text-white">Continuous Monitoring Scope</h3>
                                             </div>
 
-                                            <div className="space-y-5">
+                                            <div className="space-y-5 text-xs">
                                                 <div className="flex flex-col gap-2">
                                                     <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">Sandbox Watch Directories</label>
                                                     <input type="text" value={policies.watch_directories} onChange={(e) => setPolicies({...policies, watch_directories: e.target.value})} className="w-full bg-cyber-dark border border-cyber-border text-xs font-mono p-3 rounded-lg text-white focus:outline-none focus:border-cyber-blue transition" />
-                                                    <p className="text-[10px] text-cyber-muted">Provide comma-separated absolute directory paths to schedule for real-time protection auditing.</p>
+                                                    <p className="text-[10px] text-cyber-muted">Provide comma-separated absolute directory paths to schedule for real-time monitoring protection.</p>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-4">
@@ -811,7 +820,7 @@
                                         </div>
                                     </div>
 
-                                    {/* Weight matrix sliders */}
+                                    {/* Multiplier rule weights matrix layout */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
                                         <div className="flex items-center pb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-purple rounded mr-3"></span>
@@ -845,14 +854,14 @@
                                         </div>
                                     </div>
 
-                                    {/* Action Integration Alerts */}
+                                    {/* Integration webhooks SIEM parameters */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
                                         <div className="flex items-center pb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-orange rounded mr-3"></span>
                                             <h3 className="font-bold uppercase tracking-wider text-sm text-white">Enterprise Threat Integration Webhooks</h3>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-2 gap-6 text-xs">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">SIEM Incident Alert Slack Webhook URL</label>
                                                 <input type="text" value={policies.webhook_url} onChange={(e) => setPolicies({...policies, webhook_url: e.target.value})} className="w-full bg-cyber-dark border border-cyber-border text-xs font-mono p-3 rounded-lg text-white focus:outline-none focus:border-cyber-blue transition" />
@@ -863,7 +872,7 @@
                                             </div>
                                         </div>
 
-                                        <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black font-bold uppercase text-xs tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10">
+                                        <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black font-bold uppercase text-xs tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10 font-mono">
                                             Deploy Dynamic Rules Policy
                                         </button>
                                     </div>
@@ -873,24 +882,24 @@
                             {/* TAB 4: QUARANTINE VAULT */}
                             {activeTab === 'vault' && (
                                 <div className="space-y-8 animate-fade-in">
-                                    {/* VirusTotal Dialog Overlay Modal */}
+                                    {/* Threat Intelligence Report Dialog overlay */}
                                     {selectedVT && (
                                         <div className="fixed inset-0 bg-cyber-black/90 backdrop-blur-md z-[1000] flex justify-center items-center">
                                             <div className="bg-cyber-slate border border-cyber-border max-w-2xl w-full p-8 rounded-2xl relative shadow-2xl">
                                                 <div className="flex justify-between items-center pb-4 mb-6 border-b border-cyber-border">
-                                                    <h3 className="font-bold text-cyber-red uppercase tracking-wider text-sm">Threat Intelligence Report</h3>
+                                                    <h3 className="font-bold text-cyber-red uppercase tracking-wider text-sm font-mono">Threat Intelligence Report</h3>
                                                     <button onClick={() => setSelectedVT(null)} className="text-cyber-muted hover:text-cyber-red text-xl font-bold">&times;</button>
                                                 </div>
 
-                                                <div className="flex gap-6 items-center mb-6">
-                                                    <div className="w-24 h-24 rounded-full border-4 border-cyber-red bg-cyber-red/5 flex flex-col justify-center items-center font-mono">
+                                                <div className="flex gap-6 items-center mb-6 font-mono">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-cyber-red bg-cyber-red/5 flex flex-col justify-center items-center">
                                                         <span className="text-2xl font-bold text-cyber-red">{selectedVT.detection_ratio.split('/')[0]}</span>
                                                         <span className="text-[10px] text-cyber-muted uppercase font-bold">Engines</span>
                                                     </div>
                                                     <div>
                                                         <h4 className="text-lg font-bold text-white uppercase tracking-wider">{selectedVT.malware_family}</h4>
-                                                        <p className="text-xs text-cyber-muted font-mono mt-1">Target Signature: <span className="text-cyber-red font-semibold">{selectedVT.malware_family}</span></p>
-                                                        <p className="text-xs text-cyber-muted font-mono mt-0.5">SHA256 File Signature: <span className="text-slate-300 select-all">{selectedVT.sha256}</span></p>
+                                                        <p className="text-xs text-cyber-muted mt-1">Target Signature: <span className="text-cyber-red font-semibold">{selectedVT.malware_family}</span></p>
+                                                        <p className="text-xs text-cyber-muted mt-0.5">SHA256 File Signature: <span className="text-slate-300 select-all">{selectedVT.sha256}</span></p>
                                                     </div>
                                                 </div>
 
@@ -912,17 +921,17 @@
                                         </div>
                                     )}
 
-                                    {/* Holding items grid */}
+                                    {/* Holding items logs table */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                         <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-red rounded mr-3"></span>
-                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Quarantine Holding Area</h3>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Quarantine Holding Area</h3>
                                         </div>
 
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20 font-mono">
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Executable Binary</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Original Location Path</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Secure Vault Path</th>
@@ -934,7 +943,7 @@
                                                 <tbody>
                                                     {vaultItems.length === 0 ? (
                                                         <tr>
-                                                            <td colSpan="6" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">Quarantine Vault is currently empty.</td>
+                                                            <td colSpan="6" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider font-mono">Quarantine Vault is currently empty.</td>
                                                         </tr>
                                                     ) : (
                                                         vaultItems.map((item, index) => (
@@ -949,10 +958,10 @@
                                                                     </span>
                                                                 </td>
                                                                 <td className="p-4 text-right space-x-2">
-                                                                    <button onClick={() => handleVirusTotal(item.id)} className="px-3 py-1.5 bg-cyber-tertiary border border-cyber-border hover:border-cyber-red text-white font-sans rounded text-[10px] uppercase font-bold tracking-wider transition">
+                                                                    <button onClick={() => handleVirusTotal(item.id)} className="px-3 py-1.5 bg-cyber-tertiary border border-cyber-border hover:border-cyber-red text-white font-sans rounded text-[10px] uppercase font-bold tracking-wider transition font-mono">
                                                                         VirusTotal
                                                                     </button>
-                                                                    <button onClick={() => handleRelease(item.id)} className="px-3 py-1.5 bg-cyber-teal hover:brightness-110 text-cyber-black font-sans rounded text-[10px] uppercase font-bold tracking-wider transition">
+                                                                    <button onClick={() => handleRelease(item.id)} className="px-3 py-1.5 bg-cyber-teal hover:brightness-110 text-cyber-black font-sans rounded text-[10px] uppercase font-bold tracking-wider transition font-mono">
                                                                         Release File
                                                                     </button>
                                                                 </td>
@@ -968,9 +977,9 @@
 
                             {/* TAB 5: CALIBRATOR WORKLOADS */}
                             {activeTab === 'calibrator' && (
-                                <div className="space-y-8 animate-fade-in">
+                                <div className="space-y-8 animate-fade-in font-mono text-xs">
                                     <div className="grid grid-cols-2 gap-6">
-                                        {/* Radial indicator */}
+                                        {/* Radial progress monitor layout */}
                                         <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col justify-between">
                                             <div className="flex items-center pb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
@@ -986,7 +995,7 @@
                                                 </div>
 
                                                 <div className="w-full bg-cyber-tertiary/40 h-1.5 rounded-full overflow-hidden mt-6">
-                                                    <div className={`h-full bg-cyber-blue ${calibratorData.is_calibrating && 'animate-pulse'}`} style={{ width: calibratorData.is_calibrating ? `${calibratorData.calibration_progress}%` : '100%' }}></div>
+                                                    <div className={`h-full bg-cyber-blue ${calibratorData.is_calibrating ? 'animate-pulse' : ''}`} style={{ width: calibratorData.is_calibrating ? `${calibratorData.calibration_progress}%` : '100%' }}></div>
                                                 </div>
                                             </div>
 
@@ -995,7 +1004,7 @@
                                             </button>
                                         </div>
 
-                                        {/* Math formula */}
+                                        {/* Baseline math limits calculation equations */}
                                         <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col justify-between">
                                             <div className="flex items-center pb-4 border-b border-cyber-border">
                                                 <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
@@ -1003,13 +1012,13 @@
                                             </div>
 
                                             <div className="space-y-4">
-                                                <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-sm">
+                                                <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-xs my-2">
                                                     $$\tau_{enc} = \mu_H + 2.5 \cdot \sigma_H$$
                                                 </div>
-                                                <p className="text-xs text-cyber-muted leading-relaxed leading-relaxed mt-4">
+                                                <p className="text-xs text-cyber-muted leading-relaxed leading-relaxed mt-2">
                                                     To avoid false warnings from valid programs compiling binaries, archiving media, or saving compressed zip bundles, RANSHIELD schedules application-specific dynamic limits ($\tau_{enc}$):
                                                 </p>
-                                                <ul className="text-xs text-cyber-muted list-disc pl-6 space-y-1 mt-2">
+                                                <ul className="text-xs text-cyber-muted list-disc pl-6 space-y-1">
                                                     <li><strong>Low Workloads (Text edits):</strong> Tighter limits assigned ($\tau_{enc} = 5.2 - 6.5$)</li>
                                                     <li><strong>Medium Workloads (Browsers):</strong> Standard limits assigned ($\tau_{enc} = 6.5 - 7.2$)</li>
                                                     <li><strong>High Workloads (Compilers):</strong> High limits allocated ($\tau_{enc} = 7.2 - 7.8$)</li>
@@ -1018,7 +1027,7 @@
                                         </div>
                                     </div>
 
-                                    {/* Application classifications */}
+                                    {/* Application workload categories log */}
                                     <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
                                         <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
                                             <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
@@ -1028,7 +1037,7 @@
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20 font-mono">
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Application Executable</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Workload Category</th>
                                                         <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Mean Entropy ($\mu_H$)</th>
@@ -1079,5 +1088,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+    {% endraw %}
 </body>
 </html>

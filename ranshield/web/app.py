@@ -20,69 +20,91 @@ def index():
 
 @app.route('/dfir')
 def dfir():
-    """Renders the Digital Forensics and Incident Response view."""
-    return render_template('dfir.html')
+    """Renders the Digital Forensics view via React SPA."""
+    return render_template('index.html')
 
-@app.route('/policies', methods=['GET', 'POST'])
+@app.route('/policies')
 def policies_page():
-    """Renders the Policies and Custom Threshold Rules view, and handles setting saves."""
+    """Renders the Policies view via React SPA."""
+    return render_template('index.html')
+
+@app.route('/vault')
+def vault_page():
+    """Renders the Quarantine Vault view via React SPA."""
+    return render_template('index.html')
+
+@app.route('/calibrator')
+def calibrator_page():
+    """Renders the Workload Profiler view via React SPA."""
+    return render_template('index.html')
+
+@app.route('/api/policies', methods=['GET', 'POST'])
+def api_policies():
+    """GET or POST the security engine configuration as JSON."""
     if request.method == 'POST':
         try:
-            # Load current JSON values to merge
+            data = request.json or {}
+            
+            # Load policies to merge
             config.load_policies()
             
-            # Fetch values from forms
-            mode = request.form.get('containment_mode', config.CONTAINMENT_MODE)
-            entropy_thresh = float(request.form.get('entropy_threshold_default', config.DEFAULT_ENTROPY_THRESHOLD))
-            io_thresh = float(request.form.get('io_rate_threshold_mb', config.IO_RATE_THRESHOLD / (1024 * 1024)))
-            web_url = request.form.get('webhook_url', config.WEBHOOK_URL)
-            email_addr = request.form.get('smtp_email', config.SMTP_EMAIL)
+            # Parse settings
+            mode = data.get('containment_mode', config.CONTAINMENT_MODE)
+            entropy_thresh = float(data.get('entropy_threshold_default', config.DEFAULT_ENTROPY_THRESHOLD))
+            io_thresh = float(data.get('io_rate_threshold_mb', config.IO_RATE_THRESHOLD / (1024 * 1024)))
+            web_url = data.get('webhook_url', config.WEBHOOK_URL)
+            email_addr = data.get('smtp_email', config.SMTP_EMAIL)
             
-            # Watch directories list (comma separated text area)
-            watch_dirs_text = request.form.get('watch_directories', '')
-            watch_dirs = [path.strip() for path in watch_dirs_text.split(',') if path.strip()]
+            watch_dirs_text = data.get('watch_directories', '')
+            if isinstance(watch_dirs_text, str):
+                watch_dirs = [path.strip() for path in watch_dirs_text.split(',') if path.strip()]
+            elif isinstance(watch_dirs_text, list):
+                watch_dirs = [path.strip() for path in watch_dirs_text if path.strip()]
+            else:
+                watch_dirs = config.WATCH_DIRECTORIES
+                
             if not watch_dirs:
                 watch_dirs = config.WATCH_DIRECTORIES
                 
             # Rule weights (Layer 3)
             rule_weights = {}
+            weights_data = data.get('weights', {})
             for key in config.WEIGHTS.keys():
-                form_val = request.form.get(f'weight_{key}')
-                if form_val is not None:
-                    rule_weights[key] = float(form_val)
+                if key in weights_data:
+                    rule_weights[key] = float(weights_data[key])
                 else:
                     rule_weights[key] = config.WEIGHTS[key]
                     
-            # Write to policies.json and update global state
+            # Save configuration to disk
             config.save_policies(
-                mode=mode, 
-                watch_dirs=watch_dirs, 
-                rule_weights=rule_weights, 
-                entropy_thresh=entropy_thresh, 
-                io_thresh=io_thresh, 
-                web_url=web_url, 
+                mode=mode,
+                watch_dirs=watch_dirs,
+                rule_weights=rule_weights,
+                entropy_thresh=entropy_thresh,
+                io_thresh=io_thresh,
+                web_url=web_url,
                 email=email_addr
             )
             
-            # Force dynamic reload of directories on the watchdog monitor
+            # Force monitor watch threads reload
             if "AGENT" in current_app.config and current_app.config["AGENT"]:
                 current_app.config["AGENT"].reload_watch_directories()
                 
-            return render_template('policies.html', success=True, config=config)
+            return jsonify({"status": "success", "message": "Dynamic security policies deployed successfully."})
         except Exception as e:
-            return render_template('policies.html', error=str(e), config=config)
+            return jsonify({"status": "error", "error": str(e)}), 400
             
-    return render_template('policies.html', config=config)
-
-@app.route('/vault')
-def vault_page():
-    """Renders the Quarantine Vault and malware signature scanner views."""
-    return render_template('vault.html')
-
-@app.route('/calibrator')
-def calibrator_page():
-    """Renders the Workload Profiler and Adaptive Calibrator views."""
-    return render_template('calibrator.html')
+    # GET method: return policies parameters as clean JSON
+    config.load_policies()
+    return jsonify({
+        "containment_mode": config.CONTAINMENT_MODE,
+        "entropy_threshold_default": config.DEFAULT_ENTROPY_THRESHOLD,
+        "io_rate_threshold_mb": config.IO_RATE_THRESHOLD / (1024 * 1024),
+        "webhook_url": config.WEBHOOK_URL,
+        "smtp_email": config.SMTP_EMAIL,
+        "watch_directories": config.WATCH_DIRECTORIES,
+        "weights": config.WEIGHTS
+    })
 
 
 # --- TELEMETRY API ENDPOINTS ---

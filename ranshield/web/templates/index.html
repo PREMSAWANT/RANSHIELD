@@ -3,177 +3,1081 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RANSHIELD - Real-Time Ransomware Detection Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>RANSHIELD - Enterprise Ransomware Protection Command Center</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel via CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- ChartJS via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind Configuration for Cyberpunk Enterprise Aesthetics -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        cyber: {
+                            black: '#020408',
+                            dark: '#050911',
+                            slate: '#0b111e',
+                            tertiary: '#111a2e',
+                            border: '#1b2a47',
+                            blue: '#00d2ff',
+                            teal: '#00e676',
+                            red: '#ff1744',
+                            orange: '#ff9100',
+                            yellow: '#ffd600',
+                            purple: '#d500f9',
+                            muted: '#829ab1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Premium custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050911;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1b2a47;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00d2ff;
+        }
+    </style>
 </head>
-<body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="sidebar-brand">
-                <span class="brand-glow"></span>
-                <h2>RANSHIELD</h2>
-                <p>Endpoint Protection</p>
-            </div>
-            <ul class="nav-links">
-                <li class="active"><a href="/"><span class="icon-svg"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg></span> Telemetry Console</a></li>
-                <li><a href="/dfir"><span class="icon-svg"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span> Forensic Logs</a></li>
-                <li><a href="/policies"><span class="icon-svg"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span> Rule Policies</a></li>
-                <li><a href="/vault"><span class="icon-svg"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span> Quarantine Vault</a></li>
-                <li><a href="/calibrator"><span class="icon-svg"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></span> Workload Profiler</a></li>
-            </ul>
-            <div class="sidebar-footer">
-                <div class="status-indicator active" id="system-status-indicator">
-                    <span class="dot"></span>
-                    <span class="text" id="status-text">AGENT ACTIVE</span>
-                </div>
-            </div>
-        </nav>
+<body class="bg-cyber-dark text-slate-100 font-sans min-h-screen selection:bg-cyber-blue selection:text-cyber-black">
+    <div id="root"></div>
 
-        <!-- Main Workspace -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="content-header">
-                <div>
-                    <h1>Ransomware Detection Platform</h1>
-                    <p class="subtitle">Real-time entropy, I/O rates, and heuristic process threat scores</p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-secondary" id="btn-reset">Reset Telemetry</button>
-                    <a href="/dfir/export" class="btn btn-primary" id="btn-export">Export DFIR Report</a>
-                </div>
-            </header>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-            <div class="scroll-container">
-                <!-- Metrics Grid -->
-                <section class="metrics-grid">
-                    <div class="metric-card success">
-                        <p class="metric-label">Active Watch Directory</p>
-                        <p class="metric-value font-mono text-small text-break" id="watch-path">Resolving...</p>
-                        <p class="metric-sub">Files watched continuously</p>
-                    </div>
-                    <div class="metric-card">
-                        <p class="metric-label">Total File Events</p>
-                        <p class="metric-value" id="stat-total-events">0</p>
-                        <p class="metric-sub">I/O read/write/rename activities</p>
-                    </div>
-                    <div class="metric-card warning">
-                        <p class="metric-label">Monitored PIDs</p>
-                        <p class="metric-value" id="stat-pids">0</p>
-                        <p class="metric-sub">Active process histories</p>
-                    </div>
-                    <div class="metric-card danger" id="card-alerts">
-                        <p class="metric-label">Quarantined/Blocked</p>
-                        <p class="metric-value" id="stat-threats">0</p>
-                        <p class="metric-sub">Malicious processes contained</p>
-                    </div>
-                </section>
+        function App() {
+            // State management
+            const [activeTab, setActiveTab] = useState('telemetry');
+            const [stats, setStats] = useState({
+                total_events: 0,
+                monitored_pids: 0,
+                active_threats: 0,
+                watch_dir: 'Resolving...',
+                containment_mode: 'MONITOR_ONLY',
+                is_calibrating: false
+            });
+            const [events, setEvents] = useState([]);
+            const [timeline, setTimeline] = useState([]);
+            const [alerts, setAlerts] = useState([]);
+            const [vaultItems, setVaultItems] = useState([]);
+            const [calibratorData, setCalibratorData] = useState({
+                is_calibrating: false,
+                calibration_progress: 0,
+                profiled_processes: []
+            });
 
-                <!-- Charts and Stream Row -->
-                <section class="dashboard-grid">
-                    <!-- Charts Column (Left) -->
-                    <div class="flex-column gap-md">
-                        <!-- Entropy Analysis Graph -->
-                        <div class="card card-neon">
-                            <div class="card-header">
-                                <span class="header-line"></span>
-                                <h3>Shannon Entropy Heatmap Timeline</h3>
+            // Policy tab inputs state
+            const [policies, setPolicies] = useState({
+                containment_mode: 'MONITOR_ONLY',
+                entropy_threshold_default: 6.5,
+                io_rate_threshold_mb: 5.0,
+                webhook_url: '',
+                smtp_email: '',
+                watch_directories: '',
+                weights: {
+                    ENTROPY_BIAS: 40.0,
+                    IO_FREQUENCY: 30.0,
+                    RAPID_CHANGES: 30.0
+                }
+            });
+
+            // UI helper states
+            const [alertMessage, setAlertMessage] = useState(null);
+            const [selectedVT, setSelectedVT] = useState(null);
+            const [restoredAlert, setRestoredAlert] = useState(null);
+
+            // Chart references
+            const entropyChartRef = useRef(null);
+            const ioChartRef = useRef(null);
+            const entropyCanvasRef = useRef(null);
+            const ioCanvasRef = useRef(null);
+
+            // Fetch high level telemetry states
+            const fetchDashboardData = () => {
+                fetch('/api/stats')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setStats(data);
+                    })
+                    .catch(err => console.error('Stats fetch error:', err));
+
+                fetch('/api/events?limit=40')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setEvents(data);
+                    })
+                    .catch(err => console.error('Events fetch error:', err));
+
+                fetch('/api/timeline')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setTimeline(data);
+                    })
+                    .catch(err => console.error('Timeline fetch error:', err));
+
+                fetch('/api/alerts')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setAlerts(data);
+                    })
+                    .catch(err => console.error('Alerts fetch error:', err));
+            };
+
+            // Fetch other tab-specific states
+            const fetchPolicies = () => {
+                fetch('/api/policies')
+                    .then(res => res.json())
+                    .then(data => {
+                        setPolicies({
+                            containment_mode: data.containment_mode,
+                            entropy_threshold_default: data.entropy_threshold_default,
+                            io_rate_threshold_mb: data.io_rate_threshold_mb,
+                            webhook_url: data.webhook_url,
+                            smtp_email: data.smtp_email,
+                            watch_directories: data.watch_directories.join(', '),
+                            weights: data.weights
+                        });
+                    })
+                    .catch(err => console.error('Policies fetch error:', err));
+            };
+
+            const fetchVault = () => {
+                fetch('/api/vault')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setVaultItems(data);
+                    })
+                    .catch(err => console.error('Vault fetch error:', err));
+            };
+
+            const fetchCalibrator = () => {
+                fetch('/api/calibrator')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.error) setCalibratorData(data);
+                    })
+                    .catch(err => console.error('Calibrator fetch error:', err));
+            };
+
+            // Setup polling loops
+            useEffect(() => {
+                fetchDashboardData();
+                fetchVault();
+                fetchCalibrator();
+
+                const interval = setInterval(() => {
+                    fetchDashboardData();
+                    if (activeTab === 'vault') fetchVault();
+                    if (activeTab === 'calibrator') fetchCalibrator();
+                }, 1500);
+
+                return () => clearInterval(interval);
+            }, [activeTab]);
+
+            // Load configurations once on mount
+            useEffect(() => {
+                fetchPolicies();
+            }, []);
+
+            // Handle rendering entropy and IO bandwidth live line charts
+            useEffect(() => {
+                if (activeTab !== 'telemetry' || events.length === 0) return;
+
+                // Prepare charts datasets
+                const lastEvents = [...events].reverse();
+                const labels = lastEvents.map(e => new Date(e.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                const entropies = lastEvents.map(e => e.entropy_after);
+                const speeds = lastEvents.map(e => e.scoring);
+
+                // 1. Entropy Chart setup
+                if (entropyCanvasRef.current) {
+                    if (entropyChartRef.current) {
+                        entropyChartRef.current.destroy();
+                    }
+                    const ctx = entropyCanvasRef.current.getContext('2d');
+                    entropyChartRef.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Shannon Entropy Level',
+                                data: entropies,
+                                borderColor: '#00d2ff',
+                                backgroundColor: 'rgba(0, 210, 255, 0.05)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { color: 'rgba(27, 42, 71, 0.2)' }, ticks: { color: '#829ab1', font: { family: 'JetBrains Mono', size: 9 } } },
+                                y: { grid: { color: 'rgba(27, 42, 71, 0.2)' }, ticks: { color: '#829ab1', font: { family: 'JetBrains Mono', size: 9 } }, min: 0, max: 8 }
+                            }
+                        }
+                    });
+                }
+
+                // 2. Write Bandwidth Chart setup
+                if (ioCanvasRef.current) {
+                    if (ioChartRef.current) {
+                        ioChartRef.current.destroy();
+                    }
+                    const ctx = ioCanvasRef.current.getContext('2d');
+                    
+                    // Aggregate IO by process
+                    const processGroups = {};
+                    lastEvents.forEach(e => {
+                        const proc = e.source_exe || 'SYSTEM';
+                        if (!processGroups[proc]) processGroups[proc] = [];
+                        processGroups[proc].push(e.io_rate / (1024 * 1024)); // MB/s
+                    });
+
+                    const datasets = Object.keys(processGroups).slice(0, 3).map((proc, index) => {
+                        const colors = ['#00e676', '#ff9100', '#d500f9'];
+                        return {
+                            label: proc,
+                            data: lastEvents.map(e => e.source_exe === proc ? e.io_rate / (1024 * 1024) : 0),
+                            borderColor: colors[index % colors.length],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 1
+                        };
+                    });
+
+                    ioChartRef.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets.length > 0 ? datasets : [{
+                                label: 'System Writes',
+                                data: lastEvents.map(() => 0),
+                                borderColor: '#00e676',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: true, labels: { color: '#829ab1', font: { family: 'Outfit', size: 10 } } } },
+                            scales: {
+                                x: { grid: { color: 'rgba(27, 42, 71, 0.2)' }, ticks: { color: '#829ab1', font: { family: 'JetBrains Mono', size: 9 } } },
+                                y: { grid: { color: 'rgba(27, 42, 71, 0.2)' }, ticks: { color: '#829ab1', font: { family: 'JetBrains Mono', size: 9 } }, min: 0 }
+                            }
+                        }
+                    });
+                }
+            }, [activeTab, events]);
+
+            // Save Policies Handler
+            const savePolicies = (e) => {
+                e.preventDefault();
+                fetch('/api/policies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(policies)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        setAlertMessage({ type: 'success', text: data.message });
+                        fetchDashboardData();
+                    } else {
+                        setAlertMessage({ type: 'danger', text: data.error });
+                    }
+                })
+                .catch(err => setAlertMessage({ type: 'danger', text: 'Connection failed: ' + err }));
+            };
+
+            // Reset Database Handler
+            const handleReset = () => {
+                if (confirm('Are you sure you want to flush all process metrics and historical telemetry?')) {
+                    fetch('/api/reset', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert(data.message);
+                                fetchDashboardData();
+                            }
+                        });
+                }
+            };
+
+            // Release File from Quarantine
+            const handleRelease = (qid) => {
+                fetch('/api/vault/release', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quarantine_id: qid })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        fetchVault();
+                        fetchDashboardData();
+                    } else {
+                        alert('Release failed: ' + data.error);
+                    }
+                });
+            };
+
+            // Submit Quarantined File to VirusTotal Intelligence
+            const handleVirusTotal = (qid) => {
+                fetch('/api/vault/virustotal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quarantine_id: qid })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        setSelectedVT(data);
+                        fetchVault();
+                    } else {
+                        alert('VirusTotal lookup failed: ' + data.error);
+                    }
+                });
+            };
+
+            // Trigger Baseline Recalibration
+            const handleRecalibrate = () => {
+                if (confirm('Initiate dynamic baselining? This wipes existing bounds and profiles live application activity for 60 seconds.')) {
+                    fetch('/api/calibrator/recalibrate', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            alert(data.message);
+                            fetchCalibrator();
+                        });
+                }
+            };
+
+            // Recover Snapshot Backup folder
+            const triggerRecovery = () => {
+                fetch('/api/dfir/restore', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            setRestoredAlert({ title: 'Self-Healing Backup Restored', text: data.message });
+                        } else {
+                            setRestoredAlert({ title: 'Recovery Blocked', text: 'Error executing snapshot extraction: ' + data.message });
+                        }
+                    });
+            };
+
+            return (
+                <div className="flex min-h-screen">
+                    {/* Left Navigation Sidebar */}
+                    <nav className="w-72 bg-cyber-slate border-r border-cyber-border p-8 flex flex-col justify-between fixed h-screen z-50">
+                        <div>
+                            <div className="relative pb-6 mb-8 border-b border-cyber-border border-dashed">
+                                <div className="absolute -top-8 -left-8 w-36 h-36 bg-radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, rgba(0,0,0,0) 70%) pointer-events-none"></div>
+                                <h2 className="text-2xl font-bold tracking-wider text-white">RAN<span>SHIELD</span></h2>
+                                <p className="text-xs text-cyber-teal font-semibold uppercase tracking-[0.2em] mt-1">Endpoint Protection</p>
                             </div>
-                            <div class="card-body">
-                                <p class="help-text">Computes mathematical randomness per block. Spikes indicate potential encryption activity.</p>
-                                <div class="chart-container">
-                                    <canvas id="entropyChart"></canvas>
-                                </div>
-                            </div>
+                            
+                            <ul className="flex flex-col gap-2">
+                                <li>
+                                    <button onClick={() => setActiveTab('telemetry')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg text-sm font-medium uppercase tracking-wider transition duration-150 ${activeTab === 'telemetry' ? 'bg-cyber-tertiary text-white shadow-[inset_4px_0_0_#00d2ff]' : 'text-cyber-muted hover:text-white hover:bg-cyber-tertiary/40'}`}>
+                                        <span className="icon-svg"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg></span>
+                                        Telemetry Console
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={() => setActiveTab('dfir')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg text-sm font-medium uppercase tracking-wider transition duration-150 ${activeTab === 'dfir' ? 'bg-cyber-tertiary text-white shadow-[inset_4px_0_0_#00d2ff]' : 'text-cyber-muted hover:text-white hover:bg-cyber-tertiary/40'}`}>
+                                        <span className="icon-svg"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
+                                        Forensic Logs
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={() => setActiveTab('policies')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg text-sm font-medium uppercase tracking-wider transition duration-150 ${activeTab === 'policies' ? 'bg-cyber-tertiary text-white shadow-[inset_4px_0_0_#00d2ff]' : 'text-cyber-muted hover:text-white hover:bg-cyber-tertiary/40'}`}>
+                                        <span className="icon-svg"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></span>
+                                        Rule Policies
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={() => setActiveTab('vault')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg text-sm font-medium uppercase tracking-wider transition duration-150 ${activeTab === 'vault' ? 'bg-cyber-tertiary text-white shadow-[inset_4px_0_0_#00d2ff]' : 'text-cyber-muted hover:text-white hover:bg-cyber-tertiary/40'}`}>
+                                        <span className="icon-svg"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span>
+                                        Quarantine Vault
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={() => setActiveTab('calibrator')} className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-lg text-sm font-medium uppercase tracking-wider transition duration-150 ${activeTab === 'calibrator' ? 'bg-cyber-tertiary text-white shadow-[inset_4px_0_0_#00d2ff]' : 'text-cyber-muted hover:text-white hover:bg-cyber-tertiary/40'}`}>
+                                        <span className="icon-svg"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></span>
+                                        Workload Profiler
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
 
-                        <!-- Process I/O Rate Timeline -->
-                        <div class="card card-neon">
-                            <div class="card-header">
-                                <span class="header-line"></span>
-                                <h3>Active Process Write Bandwidth</h3>
-                            </div>
-                            <div class="card-body">
-                                <p class="help-text">Tracks raw write rate (MB/s) of active processes. Standard trigger limit is 5.0 MB/s.</p>
-                                <div class="chart-container">
-                                    <canvas id="ioChart"></canvas>
-                                </div>
+                        <div className="border-t border-cyber-border pt-6">
+                            <div className="flex items-center gap-3 px-4 py-3 bg-cyber-tertiary/30 border border-cyber-border rounded-lg">
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-teal opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyber-teal"></span>
+                                </span>
+                                <span className="text-xs text-cyber-teal font-semibold uppercase tracking-wider">Agent Monitoring Active</span>
                             </div>
                         </div>
-                    </div>
+                    </nav>
 
-                    <!-- Live Streams Column (Right) -->
-                    <div class="flex-column gap-md">
-                        <!-- Active Threats Alerts List -->
-                        <div class="card card-neon card-fill-height">
-                            <div class="card-header">
-                                <span class="header-line"></span>
-                                <h3>Security Alerts & Containments</h3>
+                    {/* Right Workspace Main Content */}
+                    <main className="flex-1 ml-72 p-10 flex flex-col h-screen overflow-hidden">
+                        {/* Header Panel */}
+                        <header className="flex justify-between items-center mb-8 pb-5 border-b border-cyber-border">
+                            <div>
+                                <h1 className="text-3xl font-bold text-white uppercase tracking-wider">
+                                    {activeTab === 'telemetry' && 'Telemetry Command Console'}
+                                    {activeTab === 'dfir' && 'Incident Response & Forensics'}
+                                    {activeTab === 'policies' && 'Heuristic Defense Policies'}
+                                    {activeTab === 'vault' && 'Quarantine Threat Vault'}
+                                    {activeTab === 'calibrator' && 'Dynamic Workload Profiler'}
+                                </h1>
+                                <p className="text-sm text-cyber-muted mt-1 uppercase tracking-wider font-medium">
+                                    {activeTab === 'telemetry' && 'Real-time Shannon entropy vectors and telemetry bounds'}
+                                    {activeTab === 'dfir' && 'Active system audit trail ledger and self-healing checkpoints'}
+                                    {activeTab === 'policies' && 'Fine-tune scoring multipliers and system containment variables'}
+                                    {activeTab === 'vault' && 'Secure holding block for contained system binaries'}
+                                    {activeTab === 'calibrator' && 'Workload modeling and adaptive classification limits'}
+                                </p>
                             </div>
-                            <div class="card-body">
-                                <div class="alerts-container" id="alerts-list">
-                                    <div class="stream-item-placeholder text-center text-muted">
-                                        <p>No active security threats detected.</p>
+                            <div className="flex gap-4">
+                                <button onClick={handleReset} className="px-5 py-2.5 bg-transparent border border-cyber-border hover:border-cyber-red hover:text-cyber-red text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200">
+                                    Purge Logs
+                                </button>
+                                <a href="/dfir/export" className="px-5 py-2.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-wider rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10">
+                                    Export Ledger
+                                </a>
+                            </div>
+                        </header>
+
+                        {/* Outer Scroll Container */}
+                        <div className="flex-1 overflow-y-auto pr-1">
+                            {/* TAB 1: TELEMETRY CONSOLE */}
+                            {activeTab === 'telemetry' && (
+                                <div className="space-y-8 animate-fade-in">
+                                    {/* Stats grid */}
+                                    <div className="grid grid-cols-4 gap-6">
+                                        <div className="bg-cyber-slate border-l-4 border-cyber-blue border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Active Watchpoint Path</p>
+                                            <p className="text-sm font-semibold font-mono text-white mt-2 truncate max-w-xs">{stats.watch_dir}</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Continuous watcher monitor</p>
+                                        </div>
+                                        <div className="bg-cyber-slate border-l-4 border-cyber-teal border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Audited File Activities</p>
+                                            <p className="text-3xl font-bold text-white mt-2 font-mono">{stats.total_events}</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Heuristics processed</p>
+                                        </div>
+                                        <div className="bg-cyber-slate border-l-4 border-cyber-orange border border-cyber-border p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5">
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Monitored Process IDs</p>
+                                            <p className="text-3xl font-bold text-white mt-2 font-mono">{stats.monitored_pids}</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Tracked system nodes</p>
+                                        </div>
+                                        <div className={`bg-cyber-slate border border-cyber-border border-l-4 ${stats.active_threats > 0 ? 'border-cyber-red animate-pulse' : 'border-cyber-red'} p-6 rounded-xl shadow-lg transition hover:-translate-y-0.5`}>
+                                            <p className="text-xs text-cyber-muted font-bold uppercase tracking-wider">Contained Detections</p>
+                                            <p className={`text-3xl font-bold mt-2 font-mono ${stats.active_threats > 0 ? 'text-cyber-red' : 'text-white'}`}>{stats.active_threats}</p>
+                                            <p className="text-[10px] text-cyber-muted mt-1 uppercase font-semibold">Blocked malware attempts</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Charts and Feeds Column Layout */}
+                                    <div className="grid grid-cols-3 gap-6">
+                                        {/* Left Side Analytical Charts */}
+                                        <div className="col-span-2 space-y-6">
+                                            <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                                <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                    <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-blue">Active Filesystem Shannon Entropy</h3>
+                                                </div>
+                                                <div className="h-56 relative">
+                                                    <canvas ref={entropyCanvasRef}></canvas>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                                <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                    <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-teal">Process Disk Write Bandwidth (MB/s)</h3>
+                                                </div>
+                                                <div className="h-56 relative">
+                                                    <canvas ref={ioCanvasRef}></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Side Logs Feed */}
+                                        <div className="space-y-6">
+                                            {/* Critical Alerts Card */}
+                                            <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col h-72">
+                                                <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                    <span className="w-1 h-4 bg-cyber-red rounded mr-3"></span>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-cyber-red">Real-Time Threat Alerts</h3>
+                                                </div>
+                                                <div className="flex-1 overflow-y-auto space-y-4">
+                                                    {alerts.length === 0 ? (
+                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase tracking-wider font-medium">No live containment actions initiated.</div>
+                                                    ) : (
+                                                        alerts.map((al, idx) => (
+                                                            <div key={idx} className="bg-cyber-red/5 border border-cyber-red/20 border-l-4 border-l-cyber-red p-3 rounded-lg text-xs font-mono space-y-1">
+                                                                <div className="flex justify-between text-cyber-red font-bold uppercase tracking-wider">
+                                                                    <span>Containment Executed</span>
+                                                                    <span>PID {al.pid}</span>
+                                                                </div>
+                                                                <div className="text-white truncate font-semibold">{al.exe_path.split('\\').pop()}</div>
+                                                                <div className="flex justify-between text-cyber-muted">
+                                                                    <span>Score: {parseFloat(al.threat_score).toFixed(1)}</span>
+                                                                    <span>{al.containment_type}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Live Activity Stream */}
+                                            <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col h-72">
+                                                <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                    <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                    <h3 className="font-bold uppercase tracking-wider text-sm text-white">Live Event Stream</h3>
+                                                </div>
+                                                <div className="flex-1 overflow-y-auto space-y-2">
+                                                    {events.length === 0 ? (
+                                                        <div className="text-center py-12 text-xs text-cyber-muted uppercase font-semibold">Awaiting folder write samples...</div>
+                                                    ) : (
+                                                        events.slice(0, 15).map((ev, idx) => (
+                                                            <div key={idx} className="bg-cyber-tertiary/30 border border-cyber-border/40 hover:border-cyber-blue/30 p-3 rounded-lg flex justify-between items-center text-xs transition duration-150">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="font-semibold text-white truncate max-w-[150px]">{ev.target_path.split('\\').pop()}</span>
+                                                                    <span className="text-[10px] text-cyber-muted font-mono">{ev.source_exe}</span>
+                                                                </div>
+                                                                <div className="flex flex-col items-end gap-1 font-mono">
+                                                                    <span className="text-[10px] text-cyber-muted">{new Date(ev.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${ev.entropy_after > 6.0 ? 'bg-cyber-red/10 text-cyber-red border border-cyber-red/25' : 'bg-cyber-teal/10 text-cyber-teal border border-cyber-teal/20'}`}>H: {parseFloat(ev.entropy_after).toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Process Scoring Matrix */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                        <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Monitored Endpoint Process Threat Matrix</h3>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">PID</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Executable Binary</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Location Path</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">I/O Cycles</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Threat Rating ($S_p$)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Indicators Triggered</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">System Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {timeline.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan="7" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">No background workloads monitored yet.</td>
+                                                        </tr>
+                                                    ) : (
+                                                        timeline.map((item, index) => {
+                                                            let badgeClass = 'bg-cyber-blue/10 text-cyber-blue border-cyber-blue/25';
+                                                            if (item.status === 'TERMINATED') badgeClass = 'bg-cyber-red/10 text-cyber-red border-cyber-red/25';
+                                                            if (item.status === 'SUSPENDED') badgeClass = 'bg-cyber-orange/10 text-cyber-orange border-cyber-orange/25';
+                                                            if (item.status === 'CALIBRATION_BASELINE') badgeClass = 'bg-cyber-yellow/10 text-cyber-yellow border-cyber-yellow/25';
+
+                                                            return (
+                                                                <tr key={index} className="border-b border-cyber-border/40 hover:bg-cyber-tertiary/10 transition font-mono text-xs">
+                                                                    <td className="p-4 font-bold text-cyber-blue">{item.pid}</td>
+                                                                    <td className="p-4 text-white font-bold">{item.exe_name}</td>
+                                                                    <td className="p-4 text-cyber-muted truncate max-w-xs">{item.exe_path}</td>
+                                                                    <td className="p-4 text-slate-300 font-semibold">{item.event_count}</td>
+                                                                    <td className={`p-4 font-bold text-sm ${item.max_score > 60 ? 'text-cyber-red' : 'text-cyber-teal'}`}>{parseFloat(item.max_score).toFixed(1)}</td>
+                                                                    <td className="p-4 text-[10px] text-cyber-muted flex gap-2 flex-wrap">
+                                                                        {item.signals_triggered.split(',').map((sig, sIdx) => (
+                                                                            <span key={sIdx} className="px-1.5 py-0.5 bg-cyber-tertiary border border-cyber-border/40 rounded text-slate-200 uppercase font-semibold">{sig.trim()}</span>
+                                                                        ))}
+                                                                    </td>
+                                                                    <td className="p-4">
+                                                                        <span className={`px-2.5 py-1 text-[10px] font-bold rounded uppercase border ${badgeClass}`}>{item.status.replace('_', ' ')}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
 
-                        <!-- Live File Event stream -->
-                        <div class="card card-neon card-fill-height">
-                            <div class="card-header">
-                                <span class="header-line"></span>
-                                <h3>Real-Time Event Stream</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="event-stream-list" id="event-stream">
-                                    <div class="stream-item-placeholder text-center text-muted">
-                                        <p>Awaiting file system changes...</p>
+                            {/* TAB 2: DFIR FORENSICS */}
+                            {activeTab === 'dfir' && (
+                                <div className="space-y-8 animate-fade-in">
+                                    {/* Restoration Banner Alert */}
+                                    {restoredAlert && (
+                                        <div className="bg-cyber-teal/5 border border-cyber-teal/20 border-l-4 border-l-cyber-teal p-5 rounded-xl flex flex-col gap-1">
+                                            <h4 className="text-sm font-bold text-cyber-teal uppercase tracking-wider">{restoredAlert.title}</h4>
+                                            <p className="text-xs text-white font-mono">{restoredAlert.text}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Action ledger cards */}
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {/* Action restoring triggers */}
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                            <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Self-Healing Restoration Snapshots</h3>
+                                            </div>
+                                            <p className="text-xs text-cyber-muted leading-relaxed font-mono">
+                                                Whenever an untrusted PID initiates write requests matching heuristic threat benchmarks, RANSHIELD leverages background file-level shadow copies or temporary user cache backups to guarantee automated snapshot recovery.
+                                            </p>
+                                            <button onClick={triggerRecovery} className="mt-6 w-full py-3 bg-gradient-to-r from-cyber-teal to-emerald-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-teal/5">
+                                                Recover watch folder snapshots
+                                            </button>
+                                        </div>
+
+                                        {/* Math formula metrics */}
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                            <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Self-Healing Recovery Logic</h3>
+                                            </div>
+                                            <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-sm">
+                                                $$\mathcal{D}_{restore} = \{ f \in \mathcal{W} \mid \delta(f) < T_{containment} \}$$
+                                            </div>
+                                            <p className="text-xs text-cyber-muted leading-relaxed mt-4">
+                                                The self-healing protocol maintains localized transactional journal entries. In the event of a containment breach trigger, files configured inside the local sandbox are automatically restored from pre-encryption cached journals.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline events ledger */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                        <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Dynamic Forensic Security Ledger</h3>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Timestamp</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">PID</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Process Name</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">File Action</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Affected File Asset</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">H (Before)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">H (After)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Threat Score ($S_p$)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Enforcement</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {events.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan="9" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">Awaiting background forensic events...</td>
+                                                        </tr>
+                                                    ) : (
+                                                        events.map((ev, index) => (
+                                                            <tr key={index} className="border-b border-cyber-border/40 hover:bg-cyber-tertiary/10 transition font-mono text-xs">
+                                                                <td className="p-4 text-cyber-muted">{new Date(ev.timestamp * 1000).toLocaleTimeString()}</td>
+                                                                <td className="p-4 font-bold text-cyber-blue">{ev.pid}</td>
+                                                                <td className="p-4 text-white font-bold">{ev.source_exe}</td>
+                                                                <td className="p-4 text-cyber-teal font-semibold">{ev.event_type}</td>
+                                                                <td className="p-4 text-cyber-muted truncate max-w-xs">{ev.target_path}</td>
+                                                                <td className="p-4">{parseFloat(ev.entropy_before).toFixed(2)}</td>
+                                                                <td className={`p-4 font-bold ${ev.entropy_after > 6.0 ? 'text-cyber-red' : 'text-slate-300'}`}>{parseFloat(ev.entropy_after).toFixed(2)}</td>
+                                                                <td className="p-4 font-semibold">{parseFloat(ev.scoring).toFixed(1)}</td>
+                                                                <td className="p-4">
+                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ev.remediation !== 'MONITOR' ? 'bg-cyber-red/10 text-cyber-red border border-cyber-red/25' : 'bg-cyber-blue/10 text-cyber-blue border border-cyber-blue/20'}`}>
+                                                                        {ev.remediation}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                            )}
 
-                <!-- Process Scores Matrix Table (Bottom) -->
-                <section class="margin-top-lg">
-                    <div class="card card-neon">
-                        <div class="card-header">
-                            <span class="header-line"></span>
-                            <h3>Monitored Process Threat Matrix</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-wrapper">
-                                <table class="telemetry-table">
-                                    <thead>
-                                        <tr>
-                                            <th>PID</th>
-                                            <th>Executable Image</th>
-                                            <th>Path Location</th>
-                                            <th>File Event Count</th>
-                                            <th>Max Threat Score ($S_p$)</th>
-                                            <th>Heuristic Signals</th>
-                                            <th>Applied Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="process-table-body">
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted py-md">No active process histories monitored.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
+                            {/* TAB 3: RULE POLICIES */}
+                            {activeTab === 'policies' && (
+                                <form onSubmit={savePolicies} className="space-y-8 animate-fade-in">
+                                    {alertMessage && (
+                                        <div className={`border-l-4 p-5 rounded-xl flex flex-col gap-1 ${alertMessage.type === 'success' ? 'bg-cyber-teal/5 border-cyber-teal border border-cyber-teal/20 text-white' : 'bg-cyber-red/5 border-cyber-red border border-cyber-red/20 text-white'}`}>
+                                            <h4 className="text-sm font-bold uppercase tracking-wider">{alertMessage.type === 'success' ? 'Configuration Saved' : 'Execution Error'}</h4>
+                                            <p className="text-xs font-mono">{alertMessage.text}</p>
+                                        </div>
+                                    )}
 
-    <!-- Script imports -->
-    <script src="/static/js/dashboard.js"></script>
+                                    {/* Config variables controls */}
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
+                                            <div className="flex items-center pb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Containment Enforcement Level</h3>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="flex items-start gap-4 p-4 bg-cyber-tertiary/20 hover:bg-cyber-tertiary/30 border border-cyber-border/60 rounded-xl cursor-pointer transition">
+                                                    <input type="radio" name="containment_mode" value="MONITOR_ONLY" checked={policies.containment_mode === 'MONITOR_ONLY'} onChange={(e) => setPolicies({...policies, containment_mode: e.target.value})} className="mt-1 accent-cyber-blue" />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold uppercase tracking-wider text-white">Heuristic Monitoring Only</span>
+                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Monitors folder events, evaluates adaptive security scores, triggers dashboard indicators, and issues email warnings without terminating binaries.</span>
+                                                    </div>
+                                                </label>
+
+                                                <label className="flex items-start gap-4 p-4 bg-cyber-tertiary/20 hover:bg-cyber-tertiary/30 border border-cyber-border/60 rounded-xl cursor-pointer transition">
+                                                    <input type="radio" name="containment_mode" value="ACTIVE_TERMINATE" checked={policies.containment_mode === 'ACTIVE_TERMINATE'} onChange={(e) => setPolicies({...policies, containment_mode: e.target.value})} className="mt-1 accent-cyber-red" />
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold uppercase tracking-wider text-cyber-red">Active Proactive Containment</span>
+                                                        <span className="text-xs text-cyber-muted mt-1 leading-relaxed">Immediately halts, terminates, and quarantines malicious process binaries matching security scores to mitigate ongoing write actions.</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
+                                            <div className="flex items-center pb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-teal rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Continuous Monitoring Scope</h3>
+                                            </div>
+
+                                            <div className="space-y-5">
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">Sandbox Watch Directories</label>
+                                                    <input type="text" value={policies.watch_directories} onChange={(e) => setPolicies({...policies, watch_directories: e.target.value})} className="w-full bg-cyber-dark border border-cyber-border text-xs font-mono p-3 rounded-lg text-white focus:outline-none focus:border-cyber-blue transition" />
+                                                    <p className="text-[10px] text-cyber-muted">Provide comma-separated absolute directory paths to schedule for real-time protection auditing.</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="flex flex-col gap-2">
+                                                        <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">Default Entropy Limit</label>
+                                                        <div className="flex items-center gap-3">
+                                                            <input type="range" min="3.0" max="7.9" step="0.1" value={policies.entropy_threshold_default} onChange={(e) => setPolicies({...policies, entropy_threshold_default: parseFloat(e.target.value)})} className="flex-1 accent-cyber-blue" />
+                                                            <span className="text-xs font-mono font-bold text-cyber-blue w-10 text-right">{policies.entropy_threshold_default}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-2">
+                                                        <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">Write Spikes Threshold</label>
+                                                        <div className="flex items-center gap-3">
+                                                            <input type="range" min="0.5" max="25.0" step="0.5" value={policies.io_rate_threshold_mb} onChange={(e) => setPolicies({...policies, io_rate_threshold_mb: parseFloat(e.target.value)})} className="flex-1 accent-cyber-teal" />
+                                                            <span className="text-xs font-mono font-bold text-cyber-teal w-12 text-right">{policies.io_rate_threshold_mb} MB</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Weight matrix sliders */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
+                                        <div className="flex items-center pb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-purple rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Heuristic Weight Correlation Matrix</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-6 font-mono text-xs">
+                                            <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-4 rounded-xl space-y-3">
+                                                <span className="text-white font-bold uppercase tracking-wider block">Shannon Entropy Bias</span>
+                                                <div className="flex items-center justify-between">
+                                                    <input type="range" min="0" max="100" value={policies.weights.ENTROPY_BIAS} onChange={(e) => setPolicies({...policies, weights: {...policies.weights, ENTROPY_BIAS: parseFloat(e.target.value)}})} className="flex-1 accent-cyber-purple" />
+                                                    <span className="text-cyber-purple font-bold ml-4 w-10 text-right">{policies.weights.ENTROPY_BIAS}%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-4 rounded-xl space-y-3">
+                                                <span className="text-white font-bold uppercase tracking-wider block">I/O Traffic Frequency</span>
+                                                <div className="flex items-center justify-between">
+                                                    <input type="range" min="0" max="100" value={policies.weights.IO_FREQUENCY} onChange={(e) => setPolicies({...policies, weights: {...policies.weights, IO_FREQUENCY: parseFloat(e.target.value)}})} className="flex-1 accent-cyber-teal" />
+                                                    <span className="text-cyber-teal font-bold ml-4 w-10 text-right">{policies.weights.IO_FREQUENCY}%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-4 rounded-xl space-y-3">
+                                                <span className="text-white font-bold uppercase tracking-wider block">Rapid File Restructuring</span>
+                                                <div className="flex items-center justify-between">
+                                                    <input type="range" min="0" max="100" value={policies.weights.RAPID_CHANGES} onChange={(e) => setPolicies({...policies, weights: {...policies.weights, RAPID_CHANGES: parseFloat(e.target.value)}})} className="flex-1 accent-cyber-blue" />
+                                                    <span className="text-cyber-blue font-bold ml-4 w-10 text-right">{policies.weights.RAPID_CHANGES}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Integration Alerts */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg space-y-6">
+                                        <div className="flex items-center pb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-orange rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Enterprise Threat Integration Webhooks</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">SIEM Incident Alert Slack Webhook URL</label>
+                                                <input type="text" value={policies.webhook_url} onChange={(e) => setPolicies({...policies, webhook_url: e.target.value})} className="w-full bg-cyber-dark border border-cyber-border text-xs font-mono p-3 rounded-lg text-white focus:outline-none focus:border-cyber-blue transition" />
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-xs text-cyber-muted uppercase font-bold tracking-wider">SMTP SOC Alert Target Email</label>
+                                                <input type="text" value={policies.smtp_email} onChange={(e) => setPolicies({...policies, smtp_email: e.target.value})} className="w-full bg-cyber-dark border border-cyber-border text-xs font-mono p-3 rounded-lg text-white focus:outline-none focus:border-cyber-blue transition" />
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black font-bold uppercase text-xs tracking-widest rounded-lg transition duration-200 shadow-lg shadow-cyber-blue/10">
+                                            Deploy Dynamic Rules Policy
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {/* TAB 4: QUARANTINE VAULT */}
+                            {activeTab === 'vault' && (
+                                <div className="space-y-8 animate-fade-in">
+                                    {/* VirusTotal Dialog Overlay Modal */}
+                                    {selectedVT && (
+                                        <div className="fixed inset-0 bg-cyber-black/90 backdrop-blur-md z-[1000] flex justify-center items-center">
+                                            <div className="bg-cyber-slate border border-cyber-border max-w-2xl w-full p-8 rounded-2xl relative shadow-2xl">
+                                                <div className="flex justify-between items-center pb-4 mb-6 border-b border-cyber-border">
+                                                    <h3 className="font-bold text-cyber-red uppercase tracking-wider text-sm">Threat Intelligence Report</h3>
+                                                    <button onClick={() => setSelectedVT(null)} className="text-cyber-muted hover:text-cyber-red text-xl font-bold">&times;</button>
+                                                </div>
+
+                                                <div className="flex gap-6 items-center mb-6">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-cyber-red bg-cyber-red/5 flex flex-col justify-center items-center font-mono">
+                                                        <span className="text-2xl font-bold text-cyber-red">{selectedVT.detection_ratio.split('/')[0]}</span>
+                                                        <span className="text-[10px] text-cyber-muted uppercase font-bold">Engines</span>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-white uppercase tracking-wider">{selectedVT.malware_family}</h4>
+                                                        <p className="text-xs text-cyber-muted font-mono mt-1">Target Signature: <span className="text-cyber-red font-semibold">{selectedVT.malware_family}</span></p>
+                                                        <p className="text-xs text-cyber-muted font-mono mt-0.5">SHA256 File Signature: <span className="text-slate-300 select-all">{selectedVT.sha256}</span></p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="max-h-56 overflow-y-auto space-y-2 font-mono text-xs">
+                                                    <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-3 rounded-lg flex justify-between">
+                                                        <span className="text-white">Kaspersky Endpoint Security</span>
+                                                        <span className="text-cyber-red font-bold">DETECTED (Lockbit.Malware.f)</span>
+                                                    </div>
+                                                    <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-3 rounded-lg flex justify-between">
+                                                        <span className="text-white">Microsoft Defender EDR</span>
+                                                        <span className="text-cyber-red font-bold">DETECTED (Ransom:Win32/Lockbit.A)</span>
+                                                    </div>
+                                                    <div className="bg-cyber-tertiary/20 border border-cyber-border/40 p-3 rounded-lg flex justify-between">
+                                                        <span className="text-white">Sophos Anti-Virus InterceptX</span>
+                                                        <span className="text-cyber-red font-bold">DETECTED (Troj/Ransom-GGY)</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Holding items grid */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                        <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-red rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Quarantine Holding Area</h3>
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Executable Binary</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Original Location Path</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Secure Vault Path</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">SHA256 Hash</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Holding Status</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {vaultItems.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan="6" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">Quarantine Vault is currently empty.</td>
+                                                        </tr>
+                                                    ) : (
+                                                        vaultItems.map((item, index) => (
+                                                            <tr key={index} className="border-b border-cyber-border/40 hover:bg-cyber-tertiary/10 transition font-mono text-xs">
+                                                                <td className="p-4 font-bold text-cyber-red">{item.original_name}</td>
+                                                                <td className="p-4 text-cyber-muted truncate max-w-xs">{item.original_path}</td>
+                                                                <td className="p-4 text-cyber-muted truncate max-w-xs">{item.quarantine_path}</td>
+                                                                <td className="p-4 text-slate-300 font-semibold truncate max-w-[120px] select-all">{item.file_hash}</td>
+                                                                <td className="p-4">
+                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${item.status === 'QUARANTINED' ? 'bg-cyber-red/10 text-cyber-red border-cyber-red/25' : 'bg-cyber-blue/10 text-cyber-blue border-cyber-blue/25'}`}>
+                                                                        {item.status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-right space-x-2">
+                                                                    <button onClick={() => handleVirusTotal(item.id)} className="px-3 py-1.5 bg-cyber-tertiary border border-cyber-border hover:border-cyber-red text-white font-sans rounded text-[10px] uppercase font-bold tracking-wider transition">
+                                                                        VirusTotal
+                                                                    </button>
+                                                                    <button onClick={() => handleRelease(item.id)} className="px-3 py-1.5 bg-cyber-teal hover:brightness-110 text-cyber-black font-sans rounded text-[10px] uppercase font-bold tracking-wider transition">
+                                                                        Release File
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 5: CALIBRATOR WORKLOADS */}
+                            {activeTab === 'calibrator' && (
+                                <div className="space-y-8 animate-fade-in">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {/* Radial indicator */}
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                                            <div className="flex items-center pb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Dynamic Workload Calibration Monitor</h3>
+                                            </div>
+
+                                            <div className="flex flex-col items-center py-6">
+                                                <div className="w-36 h-36 rounded-full border-4 border-cyber-border border-t-cyber-blue border-r-cyber-blue flex justify-center items-center relative animate-[spin_4s_linear_infinite]">
+                                                    <div className="absolute text-center animate-[counter-spin_4s_linear_infinite]">
+                                                        <span className="text-2xl font-bold font-mono text-cyber-blue">{calibratorData.is_calibrating ? parseFloat(calibratorData.calibration_progress || 0).toFixed(0) + '%' : 'COMPLETE'}</span>
+                                                        <p className="text-[10px] text-cyber-muted uppercase mt-1 font-bold">Calibration</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full bg-cyber-tertiary/40 h-1.5 rounded-full overflow-hidden mt-6">
+                                                    <div className={`h-full bg-cyber-blue ${calibratorData.is_calibrating && 'animate-pulse'}`} style={{ width: calibratorData.is_calibrating ? `${calibratorData.calibration_progress}%` : '100%' }}></div>
+                                                </div>
+                                            </div>
+
+                                            <button onClick={handleRecalibrate} className="w-full py-3 bg-gradient-to-r from-cyber-blue to-blue-600 hover:brightness-110 text-cyber-black text-xs uppercase font-bold tracking-widest rounded-lg transition duration-200">
+                                                Trigger Workload Calibration
+                                            </button>
+                                        </div>
+
+                                        {/* Math formula */}
+                                        <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                                            <div className="flex items-center pb-4 border-b border-cyber-border">
+                                                <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                                <h3 className="font-bold uppercase tracking-wider text-sm text-white">Baseline Profiling Equations</h3>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-sm">
+                                                    $$\tau_{enc} = \mu_H + 2.5 \cdot \sigma_H$$
+                                                </div>
+                                                <p className="text-xs text-cyber-muted leading-relaxed leading-relaxed mt-4">
+                                                    To avoid false warnings from valid programs compiling binaries, archiving media, or saving compressed zip bundles, RANSHIELD schedules application-specific dynamic limits ($\tau_{enc}$):
+                                                </p>
+                                                <ul className="text-xs text-cyber-muted list-disc pl-6 space-y-1 mt-2">
+                                                    <li><strong>Low Workloads (Text edits):</strong> Tighter limits assigned ($\tau_{enc} = 5.2 - 6.5$)</li>
+                                                    <li><strong>Medium Workloads (Browsers):</strong> Standard limits assigned ($\tau_{enc} = 6.5 - 7.2$)</li>
+                                                    <li><strong>High Workloads (Compilers):</strong> High limits allocated ($\tau_{enc} = 7.2 - 7.8$)</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Application classifications */}
+                                    <div className="bg-cyber-slate border border-cyber-border p-6 rounded-xl shadow-lg">
+                                        <div className="flex items-center pb-4 mb-4 border-b border-cyber-border">
+                                            <span className="w-1 h-4 bg-cyber-blue rounded mr-3"></span>
+                                            <h3 className="font-bold uppercase tracking-wider text-sm text-white">Profiled Application Workloads</h3>
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-cyber-border bg-cyber-tertiary/20">
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Application Executable</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Workload Category</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Mean Entropy ($\mu_H$)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Deviation Standard ($\sigma_H$)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Calibrated Threshold ($\tau_{enc}$)</th>
+                                                        <th className="p-4 text-xs font-semibold text-cyber-muted uppercase tracking-wider">Checkpoint timestamp</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {calibratorData.profiled_processes.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan="6" className="p-8 text-center text-xs text-cyber-muted uppercase font-bold tracking-wider">
+                                                                {calibratorData.is_calibrating ? 'Monitoring user folders baseline operations samples...' : 'No workload categories calibrated yet.'}
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        calibratorData.profiled_processes.map((item, index) => {
+                                                            let cBadge = 'bg-cyber-teal/10 text-cyber-teal border-cyber-teal/20';
+                                                            if (item.process_class === 'MEDIUM_ENTROPY') cBadge = 'bg-cyber-orange/10 text-cyber-orange border-cyber-orange/20';
+                                                            if (item.process_class === 'HIGH_ENTROPY') cBadge = 'bg-cyber-red/10 text-cyber-red border-cyber-red/20';
+
+                                                            return (
+                                                                <tr key={index} className="border-b border-cyber-border/40 hover:bg-cyber-tertiary/10 transition font-mono text-xs">
+                                                                    <td className="p-4 font-bold text-cyber-blue truncate max-w-xs">{item.exe_path.split('\\').pop()}</td>
+                                                                    <td className="p-4">
+                                                                        <span className={`px-2.5 py-1 text-[10px] font-bold rounded uppercase border ${cBadge}`}>{item.process_class.replace('_', ' ')}</span>
+                                                                    </td>
+                                                                    <td className="p-4 font-semibold text-slate-300">{parseFloat(item.mean_entropy).toFixed(4)}</td>
+                                                                    <td className="p-4 font-semibold text-slate-300">{parseFloat(item.std_entropy).toFixed(4)}</td>
+                                                                    <td className="p-4 font-bold text-cyber-red">{parseFloat(item.calibrated_threshold).toFixed(2)}</td>
+                                                                    <td className="p-4 text-cyber-muted">{new Date(item.calibrated_at * 1000).toLocaleTimeString()}</td>
+                                                                </tr>
+                                                            );
+                                                        })
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>

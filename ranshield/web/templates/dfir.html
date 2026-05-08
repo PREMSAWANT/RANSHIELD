@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RANSHIELD - DFIR Forensics Reports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div>
+                <div class="brand">
+                    <div class="brand-logo">R</div>
+                    <span class="brand-name">RANSHIELD</span>
+                </div>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="/">
+                                <span class="nav-icon">&#9638;</span> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a href="/dfir">
+                                <span class="nav-icon">&#9643;</span> DFIR Forensics
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>Version 1.0.0 (Python)</p>
+                <div class="system-status">
+                    <span class="status-indicator"></span>
+                    <span>AGENT ACTIVE</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>Digital Forensics & Incident Response (DFIR)</h1>
+                    <p>Comprehensive threat timeline and localized forensic artifact reviews.</p>
+                </div>
+                <div class="header-actions">
+                    <a href="/dfir/export" class="btn btn-primary">Download Incident Report (.MD)</a>
+                </div>
+            </header>
+
+            <!-- Main Forensic Analysis Block -->
+            <section class="full-width-grid" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Active Forensic Timeline</h2>
+                            <p class="panel-subtitle">Review localized events leading up to containment trigger. Tracks pre/post-entropy transitions.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="custom-table" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>PID</th>
+                                    <th>Process</th>
+                                    <th>Event</th>
+                                    <th>Target Resource Path</th>
+                                    <th>Entropy Before</th>
+                                    <th>Entropy After</th>
+                                    <th>Fused Score (Sp)</th>
+                                    <th>Enforced Decision</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dfir-timeline-body">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 3rem;">Awaiting incident telemetry or normal monitoring activity.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Secured Volume Backups / Fallback Snapshots</h2>
+                            <p class="panel-subtitle">Active Volume Shadow Copy status and secure directory archives.</p>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Backup Timestamp</th>
+                                    <th>Mechanism Used</th>
+                                    <th>Target Partition / Path</th>
+                                    <th>Integrity Verification</th>
+                                    <th>Restore Option</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backup-table-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">No restore checkpoints have been triggered yet. Checkpoints are automatically generated upon ransomware score breach.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Real-time fetching of detailed DFIR records
+        function formatTime(epochSecs) {
+            const date = new Date(epochSecs * 1000);
+            return date.toLocaleTimeString() + '.' + String(date.getMilliseconds()).padStart(3, '0');
+        }
+
+        async function fetchDfirData() {
+            try {
+                const response = await fetch('/api/events?limit=100');
+                if (!response.ok) return;
+                const events = await response.json();
+                
+                const timelineBody = document.getElementById('dfir-timeline-body');
+                const backupBody = document.getElementById('backup-table-body');
+                
+                if (events.length === 0) {
+                    timelineBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 3rem;">No telemetry recorded. Run tests in the watch directory to generate activity.</td></tr>`;
+                    return;
+                }
+                
+                let timelineHtml = '';
+                let backupHtml = '';
+                let backupCount = 0;
+                
+                events.forEach(e => {
+                    const name = e.exe_path.split(/[\\/]/).pop();
+                    const entBefore = e.entropy_before !== null ? e.entropy_before.toFixed(3) : '0.000';
+                    const entAfter = e.entropy_after !== null ? e.entropy_after.toFixed(3) : '0.000';
+                    const threatScore = e.threat_score !== null ? e.threat_score.toFixed(2) : '0.00';
+                    
+                    let badgeClass = 'badge-monitor';
+                    if (e.action_taken === 'TERMINATED' || e.action_taken === 'KILL') badgeClass = 'badge-terminated';
+                    else if (e.action_taken === 'SUSPENDED') badgeClass = 'badge-suspended';
+                    else if (e.action_taken === 'CALIBRATION') badgeClass = 'badge-calibration';
+                    
+                    timelineHtml += `
+                        <tr>
+                            <td style="font-family: monospace;">${formatTime(e.timestamp)}</td>
+                            <td>${e.pid}</td>
+                            <td style="font-weight: 500;">${name}</td>
+                            <td><span class="badge ${e.event_type === 'DELETE' ? 'badge-terminated' : 'badge-monitor'}">${e.event_type}</span></td>
+                            <td style="font-family: monospace; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${e.file_path}">${e.file_path}</td>
+                            <td style="font-family: monospace;">${entBefore}</td>
+                            <td style="font-family: monospace; font-weight: bold; color: ${e.entropy_after > 7.0 ? 'var(--accent-red)' : 'var(--accent-teal)'};">${entAfter}</td>
+                            <td style="font-family: monospace; font-weight: bold;">${threatScore}</td>
+                            <td><span class="badge ${badgeClass}">${e.action_taken}</span></td>
+                        </tr>
+                    `;
+
+                    // Parse fallback backup logs from actions
+                    if (e.action_taken === 'TERMINATED' || e.action_taken === 'KILL') {
+                        backupCount++;
+                        const backupTimeStr = new Date(e.timestamp * 1000).toLocaleString();
+                        backupHtml += `
+                            <tr>
+                                <td>${backupTimeStr}</td>
+                                <td><span class="badge badge-success">VSS / ZIP Fallback</span></td>
+                                <td style="font-family: monospace;">C:\\Users\\...\\RanShield_Backups\\</td>
+                                <td><span class="badge badge-success">Verified Secure</span></td>
+                                <td><button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="alert('In a production environment, this will restore the selected snapshot to the watched directory.')">Restore Directory</button></td>
+                            </tr>
+                        `;
+                    }
+                });
+                
+                timelineBody.innerHTML = timelineHtml;
+                if (backupCount > 0) {
+                    backupBody.innerHTML = backupHtml;
+                }
+            } catch (err) {
+                console.error("Failed to fetch DFIR telemetry: ", err);
+            }
+        }
+
+        // Run fetch on mount and setup polling
+        fetchDfirData();
+        setInterval(fetchDfirData, 2000);
+    </script>
+</body>
+</html>

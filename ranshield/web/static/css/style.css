@@ -128,6 +128,26 @@ body {
     transition: var(--transition-smooth);
 }
 
+.icon-svg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.nav-svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    transition: var(--transition-smooth);
+}
+
+.nav-links li.active a .nav-svg, .nav-links a:hover .nav-svg {
+    filter: drop-shadow(0 0 5px var(--accent-blue));
+}
+
 .nav-links li.active a, .nav-links a:hover {
     color: #fff;
     background-color: var(--bg-tertiary);

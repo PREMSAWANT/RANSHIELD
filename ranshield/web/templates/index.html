@@ -66,7 +66,7 @@
 <body class="bg-cyber-dark text-slate-100 font-sans min-h-screen selection:bg-cyber-blue selection:text-cyber-black">
     <div id="root"></div>
 
-    <!-- Wrapped completely in Jinja2 {% raw %} block to bypass curly braces parsing conflicts -->
+    <!-- Wrapped completely in Jinja2 raw block to bypass curly braces parsing conflicts -->
     {% raw %}
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
@@ -687,7 +687,7 @@
                                                 <h3 className="font-bold uppercase tracking-wider text-sm text-white font-mono">Self-Healing Recovery Logic</h3>
                                             </div>
                                             <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-xs my-2">
-                                                $$\mathcal{D}_{restore} = \{ f \in \mathcal{W} \mid \delta(f) < T_{containment} \}$$
+                                                {"$$\\mathcal{D}_{restore} = \\{ f \\in \\mathcal{W} \\mid \\delta(f) < T_{containment} \\}$$"}
                                             </div>
                                             <p className="text-xs text-cyber-muted leading-relaxed font-mono mt-2">
                                                 The self-healing protocol maintains localized transactional journal entries. In the event of a containment breach trigger, files configured inside the local sandbox are restored from pre-encryption cached journals.
@@ -1013,7 +1013,7 @@
 
                                             <div className="space-y-4">
                                                 <div className="font-mono text-center bg-cyber-black/50 p-4 rounded-lg border border-cyber-border/40 text-cyber-blue text-xs my-2">
-                                                    $$\tau_{enc} = \mu_H + 2.5 \cdot \sigma_H$$
+                                                    {"$$\\tau_{enc} = \\mu_H + 2.5 \\cdot \\sigma_H$$"}
                                                 </div>
                                                 <p className="text-xs text-cyber-muted leading-relaxed leading-relaxed mt-2">
                                                     To avoid false warnings from valid programs compiling binaries, archiving media, or saving compressed zip bundles, RANSHIELD schedules application-specific dynamic limits ($\tau_{enc}$):
